@@ -95,7 +95,10 @@ const HeroSlider = ({ slides = [], interval = 2000 }) => {
           <div
             key={slide.title || index}
             className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
-              index === current ? 'opacity-100' : 'opacity-0'
+              // index === current ? 'opacity-100' : 'opacity-0'
+              index === current
+                ? 'opacity-100 pointer-events-auto'
+                : 'opacity-0 pointer-events-none'
             }`}
           >
             <img src={slide.image} alt={slide.title || slide.subtitle || 'Hero slide'} className="h-full w-full object-cover" />
@@ -107,7 +110,9 @@ const HeroSlider = ({ slides = [], interval = 2000 }) => {
                 {slide.cta ? (
                   <button
                     type="button"
-                    onClick={slide.onClick}
+                    onClick={
+                      slide.onClick
+                    }
                     className="inline-flex items-center rounded-full bg-[#f01c71] px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#f46f56]/35 transition duration-200 hover:-translate-y-0.5 hover:bg-[#ff8f72]"
                   >
                     {slide.cta}
@@ -259,7 +264,8 @@ const HomePage = () => {
 
     const fetchSpecialOffers = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/products?discount=high&time=${Date.now()}`);
+        // const response = await fetch(`${API_BASE_URL}/api/products?discount=high&time=${Date.now()}`);
+       const response = await fetch(`${API_BASE_URL}/api/discount/high?t=${Date.now()}`);
         const data = await response.json();
         setSpecialOffers(Array.isArray(data.products) ? data.products : []);
       } catch (error) {
@@ -288,11 +294,11 @@ const HomePage = () => {
         title: 'Mega Sale!',
         subtitle: 'Up to 50% off on select items.',
         cta: 'Grab Offers',
-        onClick: () => navigate('/products?discount=high'),
+        onClick: () => navigate('/special-offers'),
       },
       {
         image: slide3,
-        title: 'Delivered',
+        title: 'Delivery',
         subtitle: 'Get your orders delivered within 24 hours.',
         cta: 'Order Now',
         onClick: () => navigate('/products'),
@@ -320,17 +326,14 @@ const HomePage = () => {
      <main className="flex-1 py-5 lg:py-7 space-y-10 px-3 sm:px-4 lg:px-6 xl:px-10 2xl:px-20 [@media(min-width:2560px)]:px-32">
       <div className="
   mx-auto w-full 
-  max-w-[1400px] 
-  xl:max-w-[1600px] 
-  2xl:max-w-[1800px] 
+  max-w-[1400px]
+  xl:max-w-[1600px]
+  2xl:max-w-[1800px]
   3xl:max-w-[2000px]
 
   [@media(min-width:2560px)]:max-w-[2400px]
 ">
     
-    
-
- 
         <HeroSlider slides={slides} />
 
         <SectionShell title="Shop by Price" tone="soft">
@@ -548,7 +551,7 @@ flex-shrink-0 snap-start rounded-3xl border-2 border-[#ccdfe2] ${age.bgClass} p-
           </div>
         </SectionShell>
 
-        <SectionShell title="Trending Products" actionLabel="View All" onAction={() => navigate('/products?discount=high')}>
+        {/* <SectionShell title="Trending Products" actionLabel="View All" onAction={() => navigate('/products?discount=high')}>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
             {specialOffers.slice(0, 6).map((item) => (
               <button
@@ -577,7 +580,13 @@ flex-shrink-0 snap-start rounded-3xl border-2 border-[#ccdfe2] ${age.bgClass} p-
               </button>
             ))}
           </div>
-        </SectionShell>
+        </SectionShell> */}
+
+        <SectionShell
+          title="Special Offers"
+          actionLabel="View All"
+          onAction={() => navigate('/special-offers')}
+        ></SectionShell>
 
         <SectionShell title="Shop by Character or Themes" tone="soft">
           {tagsLoading ? (

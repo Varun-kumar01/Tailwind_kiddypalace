@@ -125,6 +125,7 @@ useEffect(() => {
     fetch(`${API_BASE_URL}/api/brands`)
       .then((response) => response.json())
       .then((data) => {
+        console.log("BRANDS DATA:", data);
         if (Array.isArray(data)) {
           setBrands(data);
         }
@@ -298,6 +299,8 @@ useEffect(() => {
   const navButtonClass = 'inline-flex items-center gap-1 border-0 bg-transparent text-sm font-medium text-[#070707] transition hover:-translate-y-px hover:text-black';
   const navDropdownItemClass = 'cursor-pointer px-4 py-2 text-sm font-medium transition hover:bg-[#fff7eb]';
 
+  console.log("Categories:", categories.length);
+  console.log("Brands:", brands.length);
   return (
     <header ref={headerRef} className="sticky top-0 z-[1200] w-full">
       <div className="relative z-[1001] bg-[#2e79e3] px-3 py-2 text-[#fff7eb] sm:px-4">
@@ -316,7 +319,7 @@ useEffect(() => {
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-2">
-            <a href="https://kiddypalace.in/" target="_blank" rel="noopener noreferrer" className="inline-flex h-7 w-7 items-center justify-center rounded-full text-white transition hover:bg-white/15 sm:h-8 sm:w-8">
+            <a href="https://www.instagram.com/kdp_hyd/" target="_blank" rel="noopener noreferrer" className="inline-flex h-7 w-7 items-center justify-center rounded-full text-white transition hover:bg-white/15 sm:h-8 sm:w-8">
               <i className="fab fa-instagram" />
             </a>
             <a href="https://kiddypalace.in/" target="_blank" rel="noopener noreferrer" className="inline-flex h-7 w-7 items-center justify-center rounded-full text-white transition hover:bg-white/15 sm:h-8 sm:w-8">
@@ -446,7 +449,9 @@ useEffect(() => {
 
             <li className={navItemClass} onClick={() => navigate('/products?hasTag=true')}>Characters & Themes</li>
             <li className={navItemClass} onClick={() => navigate('/products?customized=true')}>Customized Products</li>
-            <li className={navItemClass} onClick={() => navigate('/products?discount=high')}>Special Offers</li>
+            {/* <li className={navItemClass} onClick={() => navigate('/products?discount=high')}>Special Offers</li> */}
+            <li className={navItemClass} onClick={() => navigate('/special-offers')}>Special Offers</li>
+            {/* <li className={navItemClass} onClick={() => navigate('/products?offers=true')}>Special Offers</li> */}
             {user?.role === 'super_admin' && <li className={navItemClass} onClick={() => navigate('/admin')}>Admin Dashboard</li>}
           </ul>
         </div>

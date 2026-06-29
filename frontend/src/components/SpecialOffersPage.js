@@ -13,7 +13,7 @@ const ProductsPage = () => {
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState('');    
+  const [message, setMessage] = useState('');
   const [highlightedProduct, setHighlightedProduct] = useState(null);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [mobileFilterTop, setMobileFilterTop] = useState(0);
@@ -108,7 +108,7 @@ const ProductsPage = () => {
   }, [isMobileFiltersOpen]);
 
   useEffect(() => {
-    if (!isMobileFiltersOpen) return undefined;
+    if (!isMobileFiltersOpen) return undefined;  
 
     const updateDrawerTop = () => {
       const header = document.querySelector('header');
@@ -276,75 +276,94 @@ const ProductsPage = () => {
   //     }
 
 
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      setMessage(""); // ✅ clear old "No products" message
+//   const fetchProducts = async () => {
+//     try {
+//       setLoading(true);
+//       setMessage(""); // ✅ clear old "No products" message
 
-      // Cache buster to ensure fresh data
-      const cacheBuster = `?t=${Date.now()}`;
+//       // Cache buster to ensure fresh data
+//       const cacheBuster = `?t=${Date.now()}`;
 
-      // 🥇 PRIORITY 1: Specific tag (Marvel, DC, etc.)
-      if (tagId) {
-        const res = await fetch(`${API_BASE_URL}/api/products/by-tag/${tagId}${cacheBuster}`);
-        const data = await res.json();
-        setProducts(data.products || []);
-        return;
-      }
+//       // 🥇 PRIORITY 1: Specific tag (Marvel, DC, etc.)
+//       if (tagId) {
+//         const res = await fetch(`${API_BASE_URL}/api/products/by-tag/${tagId}${cacheBuster}`);
+//         const data = await res.json();
+//         setProducts(data.products || []);
+//         return;
+//       }
 
-      // 🥈 PRIORITY 2: All tagged products (Characters & Themes page)
-      if (hasTag) {
-        const res = await fetch(`${API_BASE_URL}/api/products/with-tags${cacheBuster}`);
-        const data = await res.json();
-        setProducts(data.products || []);
-        return;
-      }
+//       // 🥈 PRIORITY 2: All tagged products (Characters & Themes page)
+//       if (hasTag) {
+//         const res = await fetch(`${API_BASE_URL}/api/products/with-tags${cacheBuster}`);
+//         const data = await res.json();
+//         setProducts(data.products || []);
+//         return;
+//       }
 
-      // ⭐ Customized
-      if (searchParams.get("customized") === "true") {
-        const res = await fetch(`${API_BASE_URL}/api/products/customized${cacheBuster}`);
-        const data = await res.json();
-        setProducts(data.products || []);
-        return;
-      }
+//       // ⭐ Customized
+//       if (searchParams.get("customized") === "true") {
+//         const res = await fetch(`${API_BASE_URL}/api/products/customized${cacheBuster}`);
+//         const data = await res.json();
+//         setProducts(data.products || []);
+//         return;
+//       }
 
-      // 🔥 Offers
-      if (searchParams.get("offers") === "true") {
-        const res = await fetch(`${API_BASE_URL}/api/products/offers${cacheBuster}`);
-        const data = await res.json();
-        setProducts(data.products || []);
-        return;
-      }
+//       // 🔥 Offers
+//       if (searchParams.get("offers") === "true") {
+//         const res = await fetch(`${API_BASE_URL}/api/products/offers${cacheBuster}`);
+//         const data = await res.json();
+//         setProducts(data.products || []);
+//         return;
+//       }
 
-      // 🆕 New Arrivals
-      if (isNewArrivalsPage) {
-        const res = await fetch(`${API_BASE_URL}/api/new-arrivals?time=${Date.now()}`);
-        const data = await res.json();
-        setProducts(data.products || []);
-        return;
-      }
+//       // 🆕 New Arrivals
+//       if (isNewArrivalsPage) {
+//         const res = await fetch(`${API_BASE_URL}/api/new-arrivals?time=${Date.now()}`);
+//         const data = await res.json();
+//         setProducts(data.products || []);
+//         return;
+//       }
 
-      // 📦 Default / category / subcategory / discount
-      let url = `${API_BASE_URL}/api/products${cacheBuster}`;
+//       // 📦 Default / category / subcategory / discount
+//       let url = `${API_BASE_URL}/api/products${cacheBuster}`;
 
-      if (discount === "high") {
-        url = `${API_BASE_URL}/api/discount/high${cacheBuster}`;
-      } else if (subcategory) {
-        url = `${API_BASE_URL}/api/products/by-subcategory/${encodeURIComponent(subcategory)}${cacheBuster}`;
-      } else if (categoryId) {
-        url = `${API_BASE_URL}/api/products/by-category/${categoryId}${cacheBuster}`;
-      }
+//       if (discount === "high") {
+//         url = `${API_BASE_URL}/api/discount/high${cacheBuster}`;
+//       } else if (subcategory) {
+//         url = `${API_BASE_URL}/api/products/by-subcategory/${encodeURIComponent(subcategory)}${cacheBuster}`;
+//       } else if (categoryId) {
+//         url = `${API_BASE_URL}/api/products/by-category/${categoryId}${cacheBuster}`;
+//       }
 
-      const res = await fetch(url);
-      const data = await res.json();
-      setProducts(data.products || []);
-    } catch (error) {
-      console.error("Error fetching products:", error);
-      setMessage("Error loading products");
-    } finally {
-      setLoading(false);
-    }
-  };
+//       const res = await fetch(url);
+//       const data = await res.json();
+//       setProducts(data.products || []);
+//     } catch (error) {
+//       console.error("Error fetching products:", error);
+//       setMessage("Error loading products");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+      const fetchProducts = async () => {
+        try {
+          setLoading(true);
+
+          const res = await fetch(
+            `${API_BASE_URL}/api/discount/high?t=${Date.now()}`
+          );
+
+          const data = await res.json();
+
+          setProducts(data.products || []);
+        } catch (error) {
+          console.error("Error fetching special offers:", error);
+          setMessage("Error loading products");
+        } finally {
+          setLoading(false);
+        }
+      };
 
 
 
@@ -625,21 +644,23 @@ const ProductsPage = () => {
     return 0;
   });
 
-  const pageTitle = discount === 'high'
-    ? 'Special Offers'
-    : searchParams.get('customized') === 'true'
-      ? 'Customized Products'
-      : isNewArrivalsPage
-        ? 'Fresh In Store'
-        : hasTag || tagId
-          ? 'Characters & Themes'
-          : age
-            ? `Products for ${age}`
-            : subcategory
-              ? subcategory.toUpperCase()
-              : category
-                ? 'Category Products'
-                : 'All Products';
+  // const pageTitle = discount === 'high'
+  //   ? 'Special Offers'
+  //   : searchParams.get('customized') === 'true'
+  //     ? 'Customized Products'
+  //     : isNewArrivalsPage
+  //       ? 'Fresh In Store'
+  //       : hasTag || tagId
+  //         ? 'Characters & Themes'
+  //         : age
+  //           ? `Products for ${age}`
+  //           : subcategory
+  //             ? subcategory.toUpperCase()
+  //             : category
+  //               ? 'Category Products'
+  //               : 'All Products';
+
+  const pageTitle = 'Special Offers';
 
   const clearAllFilters = () => {
     setFilters({ priceRange: 'all', ageRange: 'all', brand: 'all' });

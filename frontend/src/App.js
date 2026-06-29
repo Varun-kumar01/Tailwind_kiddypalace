@@ -7,7 +7,7 @@ import LoginPage from './components/LoginPage';
 import AdminPage from './components/AdminPage';
 import AdminLogin from './components/AdminLogin';
 import ProductsPage from './components/ProductsPage';
-import TrendingProductsPage from './components/TrendingProductsPage';
+// import TrendingProductsPage from './components/TrendingProductsPage';
 import CartPage from './components/CartPage';
 import CheckoutPage from './components/CheckoutPage';
 import PaymentPage from './components/PaymentPage';
@@ -22,6 +22,7 @@ import ShippingAddresses from './components/ShippingAddresses';
 import ManageAddresses from './components/ManageAddresses';
 import About from './components/About';
 import Careers from './components/Careers';
+import SpecialOffersPage from './components/SpecialOffersPage';
 
 
 function App() {
@@ -43,11 +44,13 @@ function App() {
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/admin/adminpage" element={<AdminPage />} />
+            
 
             <Route path="/products/by-category/:categoryId" element={<ProductsPage />} />
             <Route path="/products/by-subcategory/:subcategory" element={<ProductsPage />} />
             <Route path="/products/tags" element={<ProductsPage />} />
-            <Route path="/products/trending" element={<TrendingProductsPage />} />
+            {/* <Route path="/products/trending" element={<TrendingProductsPage />} /> */}
+            <Route path="/special-offers" element={<SpecialOffersPage />} />
             <Route path="/products" element={<ProductsPage />} />
             <Route path="/cart" element={<CartPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
