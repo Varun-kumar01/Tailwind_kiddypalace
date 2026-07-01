@@ -14,6 +14,7 @@ const Header = () => {
   const [brands, setBrands] = useState([]);
   const [hoveredCategory, setHoveredCategory] = useState(null);
   const [subcategories, setSubcategories] = useState([]);
+  const [emptyCategoryIds, setEmptyCategoryIds] = useState(new Set());
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [showStoresDropdown, setShowStoresDropdown] = useState(false);
@@ -265,10 +266,15 @@ useEffect(() => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/categories/${categoryId}/subcategories`);
       const data = await response.json();
-      setSubcategories(Array.isArray(data) ? data : []);
+      const subs = Array.isArray(data) ? data : [];
+      setSubcategories(subs);
+      if (subs.length === 0) {
+        setEmptyCategoryIds(prev => new Set([...prev, categoryId]));
+      }
     } catch (error) {
       console.error('Error fetching subcategories:', error);
-    }
+    
+    } 
   };
 
   const handleNavigateCategory = (subcategory) => {
@@ -369,7 +375,7 @@ useEffect(() => {
           <a href="/"><img src={logo} alt="KP Logo" className="h-12 w-auto cursor-pointer transition hover:scale-105 sm:h-16" /></a>
         </div>
        
-       <div className="hidden flex-1 justify-center lg:flex overflow-hidden">
+       <div className="hidden flex-1 justify-center lg:flex">
           <ul className="m-0 flex list-none items-center gap-3 xl:gap-6 p-0">
             <li className={navItemClass} onClick={() => navigate('/about')}>About</li>
             <li className={navItemClass} onClick={() => navigate('/products')}>All Products</li>
@@ -408,9 +414,19 @@ useEffect(() => {
                             event.stopPropagation();
                             handleMouseEnter(category.sno);
                             setHoveredCategory(category.sno);
+  // Navigate directly if no subcategories
+                            setTimeout(() => {
+                              if (subcategories.length === 0) {
+                                navigate(`/products/by-category/${category.sno}`);
+                                setActiveDropdown(null);
+                              }
+                            }, 300);
                           }}
                         >
-                          {category.category_name} <ChevronRight size={12} className="text-[#2e79e3]" />
+                          {category.category_name}
+                          {!emptyCategoryIds.has(category.sno) && (
+                            <ChevronRight size={12} className="text-[#2e79e3]" />
+                            )}
                         </li>
                       ))}
                     </ul>

@@ -339,7 +339,11 @@ const PaymentPage = () => {
                   onClick={handlePayment}
                   disabled={loading}
                 >
-                  {loading ? '⏳ Processing...' : `Pay ₹${Number(orderData.total).toFixed(2)}`}
+                  {loading 
+  ? '⏳ Processing...' 
+  : paymentOption === 'cod' 
+    ? `Place Order (COD) ₹${Number(orderData.total).toFixed(2)}`
+    : `Pay ₹${Number(orderData.total).toFixed(2)}`}     
                 </button>
 
                 <div className="mt-4 flex items-center justify-center gap-2 text-sm text-[#4f6354]">

@@ -180,7 +180,7 @@ router.post('/products', upload.any(), productController.addProduct);
 router.delete('/products/:id', productController.deleteProduct);
 
 // Create new order
-// router.post('/orders', productController.createOrder);
+router.post('/orders', productController.createOrder);
 
 router.post(
   "/products/bulk-images",

@@ -17,3 +17,4 @@ const uploadStore = require('../middleware/uploadStore');
 router.post('/:id/image', authenticateAdmin, uploadStore.single('image'), storeController.uploadStoreImage);
 
 module.exports = router;
+
