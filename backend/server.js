@@ -18,6 +18,7 @@ const giftCardRoutes = require('./routes/giftCardRoutes'); // ✅ new
 const shippingRoutes = require('./routes/shippingRoutes');
 const brandRoutes = require('./routes/brands');
 const settingsRoutes = require('./routes/settingRoutes');
+const tagRoutes = require('./routes/tags'); // 👈 ADDED
 
 const ensureAboutTable = async () => {
   try {
@@ -128,6 +129,7 @@ app.use('/api', categoryRoutes);
 app.use('/api', paymentRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/brands', brandRoutes);
+app.use('/api/tags', tagRoutes); // 👈 ADDED
 
 // Mount gift cards routes under /api/giftcards
 app.use('/api/giftcards', giftCardRoutes);
@@ -184,3 +186,5 @@ app.listen(config.PORT, () => {
   console.log(`✅ Server is running on port ${config.PORT}`);
   console.log(`📋 Environment: ${config.NODE_ENV}`);
 });
+
+
