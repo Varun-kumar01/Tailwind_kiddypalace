@@ -2154,15 +2154,28 @@ exports.getProductsBySubcategory = async (req, res) => {
   try {
     const { subcategoryId } = req.params;
 
+    // Check if it's a name (not a number) and look up the ID
+    let finalSubcategoryId = subcategoryId;
+    
+    if (isNaN(subcategoryId)) {
+      // It's a name — look up the sno from subcategory table
+      const [rows] = await db.query(
+        `SELECT sno FROM subcategory WHERE subcategory_name = ? LIMIT 1`,
+        [subcategoryId]
+      );
+      if (!rows.length) {
+        return res.json({ success: true, products: [] });
+      }
+      finalSubcategoryId = rows[0].sno;
+    }
+
     const [products] = await db.query(
       `SELECT * FROM products WHERE subcategory_id = ? ORDER BY created_at DESC`,
-      [subcategoryId]
+      [finalSubcategoryId]
     );
 
-    // Determine a display image and normalized discount_percent for each product
     const productsWithImages = await Promise.all(
       products.map(async (product) => {
-        // Determine image_url (either manual or first product_images entry)
         let image_url = product.image_url;
         if (!image_url) {
           const [[firstImage]] = await db.query(
@@ -2171,11 +2184,9 @@ exports.getProductsBySubcategory = async (req, res) => {
           );
           image_url = firstImage?.image_url || null;
         }
-
         return {
           ...product,
           image_url,
-          // Normalized percentage field for frontend
           discount_percent: Number(product.discount) || 0
         };
       })
@@ -3863,6 +3874,92 @@ exports.getBestSellingProducts = async (req, res) => {
       success: false,
       message: "Failed to load best-selling products"
     });
+  }
+};
+exports.createOrder = async (req, res) => {
+  const connection = await db.getConnection();
+  try {
+    const { userId, items, totalAmount, shippingAddress, paymentMethod, paymentDetails } = req.body;
+
+    if (!items || !items.length) {
+      return res.status(400).json({ success: false, message: 'No items in order' });
+    }
+    if (!shippingAddress) {
+      return res.status(400).json({ success: false, message: 'Shipping address is required' });
+    }
+
+    await connection.beginTransaction();
+
+    const orderNumber = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const subtotal = items.reduce((sum, item) => sum + (Number(item.price) * (Number(item.quantity) || 1)), 0);
+
+    const [orderResult] = await connection.query(
+      `INSERT INTO orders_new 
+        (user_id, order_number, total_amount, subtotal, gst_amount,
+         shipping_full_name, shipping_email, shipping_phone,
+         shipping_address, shipping_city, shipping_state,
+         shipping_zip_code, shipping_country,
+         payment_method, payment_status, payment_details, order_status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        userId || null,
+        orderNumber,
+        totalAmount,
+        subtotal,
+        0,
+        shippingAddress.fullName,
+        shippingAddress.email,
+        shippingAddress.phone,
+        shippingAddress.address,
+        shippingAddress.city,
+        shippingAddress.state || '',
+        shippingAddress.zipCode,
+        shippingAddress.country || 'India',
+        paymentMethod,
+        paymentMethod === 'cod' ? 'pending' : 'paid',
+        JSON.stringify(paymentDetails || {}),
+        'pending'
+      ]
+    );
+
+    const orderId = orderResult.insertId;
+
+    for (const item of items) {
+      await connection.query(
+        `INSERT INTO order_items 
+          (order_id, product_id, product_name, product_price, quantity, item_total)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+          orderId,
+          item.id,
+          item.name,
+          item.price,
+          item.quantity || 1,
+          Number(item.price) * (Number(item.quantity) || 1)
+        ]
+      );
+
+      await connection.query(
+        `UPDATE products SET stock_quantity = stock_quantity - ? WHERE id = ? AND stock_quantity >= ?`,
+        [item.quantity || 1, item.id, item.quantity || 1]
+      );
+    }
+
+    await connection.commit();
+
+    res.status(201).json({
+      success: true,
+      message: 'Order placed successfully',
+      orderId,
+      orderNumber
+    });
+
+  } catch (error) {
+    await connection.rollback();
+    console.error('Create order error:', error);
+    res.status(500).json({ success: false, message: 'Server error while placing order' });
+  } finally {
+    connection.release();
   }
 };
 

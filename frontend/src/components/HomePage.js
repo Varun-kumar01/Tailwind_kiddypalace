@@ -287,7 +287,8 @@ const HomePage = () => {
         title: 'New Arrivals!',
         subtitle: 'Check out the latest products in our store.',
         cta: 'Shop Now',
-        onClick: () => navigate('/products'),
+        onClick: () => navigate('/products?new=true'),
+
       },
       {
         image: slide2,
