@@ -288,7 +288,6 @@ const HomePage = () => {
         subtitle: 'Check out the latest products in our store.',
         cta: 'Shop Now',
         onClick: () => navigate('/products?new=true'),
-
       },
       {
         image: slide2,
