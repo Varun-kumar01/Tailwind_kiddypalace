@@ -163,7 +163,8 @@ router.put('/products/:id/stock', productController.updateProductStock);
 //   authenticateAdmin,
 //   uploadImage
 // );
-
+// 📥 Export all products to Excel (admin only) — must be before /products/:id
+router.get('/products/export', authenticateAdmin, productController.exportProducts);
 // Get single product (MUST come after all specific product routes)
 router.get('/products/:id', productController.getProductById);
 

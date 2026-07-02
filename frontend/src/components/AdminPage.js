@@ -861,7 +861,27 @@ const fetchProductsBySubcategory = async (subcategoryId) => {
     setSelectedProductId(e.target.value);
     setMessage('');
   };
+const handleDownloadExcel = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/products/export`, {
+      headers: getAdminHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to download products');
 
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `products_export_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error('Download products error:', err);
+    showToast('❌ Failed to download products', 'error');
+  }
+};
   // 🚀 Bulk upload images by product_code (filename)
 const handleBulkImageUpload = async (e) => {
   e.preventDefault();
@@ -3598,30 +3618,39 @@ if (isVerifying) {
         <h2 className="m-0 text-2xl font-black text-slate-900">Manage Products</h2>
         <p className="mt-1 text-sm text-slate-600">{filteredManageProducts.length} items found</p>
       </div>
-
-      <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr),220px] lg:max-w-[640px]">
-        <input
-          type="text"
-          placeholder="Search by product name or code"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-        />
-
-        <select
-          value={manageSort}
-          onChange={(e) => setManageSort(e.target.value)}
-          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-        >
-          <option value="latest">Sort: Latest</option>
-          <option value="name_asc">Sort: Name A-Z</option>
-          <option value="name_desc">Sort: Name Z-A</option>
-          <option value="price_low">Sort: Price Low to High</option>
-          <option value="price_high">Sort: Price High to Low</option>
-          <option value="stock_low">Sort: Stock Low to High</option>
-        </select>
-      </div>
     </div>
+    <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr),220px,190px] lg:max-w-[820px]">
+
+  <input
+    type="text"
+    placeholder="Search by product name or code"
+    value={searchQuery}
+    onChange={(e) => setSearchQuery(e.target.value)}
+    className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+  />
+
+  <select
+    value={manageSort}
+    onChange={(e) => setManageSort(e.target.value)}
+    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+  >
+    <option value="latest">Sort: Latest</option>
+    <option value="name_asc">Sort: Name A-Z</option>
+    <option value="name_desc">Sort: Name Z-A</option>
+    <option value="price_low">Sort: Price Low to High</option>
+    <option value="price_high">Sort: Price High to Low</option>
+    <option value="stock_low">Sort: Stock Low to High</option>
+  </select>
+
+  <button
+    type="button"
+    onClick={handleDownloadExcel}
+    className="w-full rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
+  >
+    ⬇ Download Excel
+  </button>
+
+</div>
 
     {loadingProducts ? (
       <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-12 text-center text-sm font-medium text-slate-600">
