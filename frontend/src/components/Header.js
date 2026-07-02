@@ -14,6 +14,9 @@ const Header = () => {
   const [brands, setBrands] = useState([]);
   const [hoveredCategory, setHoveredCategory] = useState(null);
   const [subcategories, setSubcategories] = useState([]);
+  const [selectedSubcategory, setSelectedSubcategory] = useState(null);
+  const [subSubcategories, setSubSubcategories] = useState([]);
+  const [loadingSubSubcategories, setLoadingSubSubcategories] = useState(false);
   const [emptyCategoryIds, setEmptyCategoryIds] = useState(new Set());
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -263,6 +266,8 @@ useEffect(() => {
 
   const handleMouseEnter = async (categoryId) => {
     setHoveredCategory(categoryId);
+    setSelectedSubcategory(null);
+    setSubSubcategories([]);
     try {
       const response = await fetch(`${API_BASE_URL}/api/categories/${categoryId}/subcategories`);
       const data = await response.json();
@@ -273,14 +278,41 @@ useEffect(() => {
       }
     } catch (error) {
       console.error('Error fetching subcategories:', error);
-    
-    } 
+      setSubcategories([]);
+    }
+  };
+
+  const handleSelectSubcategory = async (categoryId, subcategory) => {
+    setSelectedSubcategory(subcategory);
+    setLoadingSubSubcategories(true);
+    setSubSubcategories([]);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/categories/${categoryId}/subcategories/${subcategory.sno}/sub-subcategories`);
+      const data = await response.json();
+      const nested = Array.isArray(data?.subSubcategories) ? data.subSubcategories : [];
+      setSubSubcategories(nested);
+      if (!nested.length) {
+        navigate(`/products/by-subcategory/${encodeURIComponent(subcategory.subcategory_name)}`);
+        setHoveredCategory(null);
+        setSubcategories([]);
+        setSubSubcategories([]);
+        setSelectedSubcategory(null);
+        setActiveDropdown(null);
+      }
+    } catch (error) {
+      console.error('Error fetching sub-subcategories:', error);
+      setSubSubcategories([]);
+    } finally {
+      setLoadingSubSubcategories(false);
+    }
   };
 
   const handleNavigateCategory = (subcategory) => {
     navigate(`/products/by-subcategory/${encodeURIComponent(subcategory)}`);
     setHoveredCategory(null);
     setSubcategories([]);
+    setSubSubcategories([]);
+    setSelectedSubcategory(null);
     setActiveDropdown(null);
   };
 
@@ -386,7 +418,7 @@ useEffect(() => {
               </button>
               {activeDropdown === 'age' && (
                 <ul className="absolute left-0 top-full z-50 mt-3 flex min-w-40 flex-col rounded-2xl bg-white py-2 shadow-soft ring-1 ring-black/5" onMouseEnter={() => cancelDropdownClose()} onMouseLeave={() => scheduleDropdownClose('age')}>
-                  {['0-18 Months', '18-36 Months', '3-5 Years', '5-7 Years', '7-9 Years', '9-12 Years', '12+ Years'].map((age) => (
+                  {['0-18 Months', '18-36 Months', '3-5 Years', '5-7 Years', '7-9 Years', '9-12 Years', '12+ Years',].map((age) => (
                     <li key={age} className={navDropdownItemClass} onClick={() => { navigate(`/products?age=${encodeURIComponent(age)}`); setActiveDropdown(null); }}>
                       {age}
                     </li>
@@ -432,17 +464,47 @@ useEffect(() => {
                     </ul>
                   </div>
                   <div className="w-3/5 max-h-[360px] overflow-y-auto p-4">
-                    <ul className="m-0 list-none p-0">
-                      {subcategories.length > 0 ? subcategories.map((subcategory) => (
-                        <li
-                          key={subcategory.sno}
-                          className="flex cursor-pointer items-center justify-between rounded-xl px-3 py-3 text-sm font-medium transition hover:bg-[#fff7eb]"
-                          onClick={() => handleNavigateCategory(subcategory.subcategory_name)}
+                    {selectedSubcategory ? (
+                      <div>
+                        <button
+                          type="button"
+                          className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#2e79e3]"
+                          onClick={() => setSelectedSubcategory(null)}
                         >
-                          {subcategory.subcategory_name} <ChevronRight size={11} className="text-[#2e79e3]" />
-                        </li>
-                      )) : <li className="px-3 py-6 text-center text-sm text-[#888]">Hover a category to view subcategories</li>}
-                    </ul>
+                          <ChevronRight size={12} className="rotate-180" /> Back to subcategories
+                        </button>
+                        <div className="mb-3 text-sm font-semibold text-[#273c2e]">{selectedSubcategory.subcategory_name}</div>
+                        {loadingSubSubcategories ? (
+                          <div className="px-3 py-6 text-center text-sm text-[#888]">Loading sub-subcategories...</div>
+                        ) : subSubcategories.length > 0 ? (
+                          <ul className="m-0 list-none p-0">
+                            {subSubcategories.map((item) => (
+                              <li
+                                key={item.id}
+                                className="flex cursor-pointer items-center justify-between rounded-xl px-3 py-3 text-sm font-medium transition hover:bg-[#fff7eb]"
+                                onClick={() => handleNavigateCategory(item.sub_subcategory_name)}
+                              >
+                                {item.sub_subcategory_name} <ChevronRight size={11} className="text-[#2e79e3]" />
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <div className="px-3 py-6 text-center text-sm text-[#888]">No further subcategories found.</div>
+                        )}
+                      </div>
+                    ) : (
+                      <ul className="m-0 list-none p-0">
+                        {subcategories.length > 0 ? subcategories.map((subcategory) => (
+                          <li
+                            key={subcategory.sno}
+                            className="flex cursor-pointer items-center justify-between rounded-xl px-3 py-3 text-sm font-medium transition hover:bg-[#fff7eb]"
+                            onClick={() => handleSelectSubcategory(hoveredCategory, subcategory)}
+                          >
+                            {subcategory.subcategory_name} <ChevronRight size={11} className="text-[#2e79e3]" />
+                          </li>
+                        )) : <li className="px-3 py-6 text-center text-sm text-[#888]">Hover a category to view subcategories</li>}
+                      </ul>
+                    )}
                   </div>
                 </div>
               )}

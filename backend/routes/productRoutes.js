@@ -167,8 +167,24 @@ router.put('/products/:id/stock', productController.updateProductStock);
 // Get single product (MUST come after all specific product routes)
 router.get('/products/:id', productController.getProductById);
 
+
 // Get products by subcategory (MUST be before /products/:id)
 router.get('/products/subcategory/:subcategoryId', productController.getProductsBySubcategory);
+router.get('/subcategories/:parentId/children', async (req, res) => {
+  try {
+    const db = require('../config/db');
+    const { parentId } = req.params;
+    const [rows] = await db.query(
+      'SELECT * FROM subcategory WHERE parent_id = ? ORDER BY subcategory_name ASC',
+      [parentId]
+    );
+    res.json({ success: true, subcategories: rows });
+  } catch (err) {
+    console.error('Error fetching child subcategories:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch subcategories' });
+  }
+});
+
 
 //get products by character or themes (MUST be before /products/:id)
 router.get("/products/by-tag/:tagId", productController.getProductsByTag);

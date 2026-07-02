@@ -68,6 +68,7 @@ function App() {
             {/* <Route path="/giftcards/:id" element={<GiftCardDetails />} /> */}
             <Route path="/giftCards" element={<GiftCardsComingSoon />} />
             <Route path="/characters" element={<ProductsPage />} />
+            <Route path="/products/subsubcategory/:subsubcategoryId"element={<ProductsPage />}/>
 
           </Routes>
         </div>
