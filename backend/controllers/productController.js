@@ -1,4 +1,4 @@
-const db = require('../config/db');
+
 const xlsx = require("xlsx");
 const fs = require("fs");
 const path = require('path');
@@ -41,7 +41,41 @@ exports.getAllProducts = async (req, res) => {
     res.status(500).json({ message: 'Server error while fetching products' });
   }
 };
+// 📥 Export all products to Excel (Admin only)
+exports.exportProducts = async (req, res) => {
+  try {
+    const [products] = await db.query(`SELECT * FROM products ORDER BY created_at DESC`);
 
+    // Match the exact column order of your import template
+    const columns = [
+      'name', 'product_code', 'description', 'mrp', 'discount', 'price',
+      'stock_quantity', 'brand_name', 'age_range', 'gender',
+      'category_id', 'subcategory_id'
+    ];
+
+    const rows = products.map((p) => {
+      const row = {};
+      columns.forEach((col) => {
+        row[col] = p[col] !== undefined && p[col] !== null ? p[col] : '';
+      });
+      return row;
+    });
+
+    const worksheet = xlsx.utils.json_to_sheet(rows, { header: columns });
+    const workbook = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(workbook, worksheet, 'Products');
+
+    const buffer = xlsx.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+    const fileName = `products_export_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    return res.send(buffer);
+  } catch (error) {
+    console.error('Export products error:', error);
+    res.status(500).json({ success: false, message: 'Server error while exporting products' });
+  }
+};
 // 🎭 Get all products that have tags (Characters & Themes)
 exports.getProductsWithTags = async (req, res) => {
   try {
@@ -3962,6 +3996,6 @@ exports.createOrder = async (req, res) => {
     connection.release();
   }
 };
-
+const db = require('../config/db');
 
 

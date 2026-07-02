@@ -551,42 +551,55 @@ flex-shrink-0 snap-start rounded-3xl border-2 border-[#ccdfe2] ${age.bgClass} p-
           </div>
         </SectionShell>
 
-        {/* <SectionShell title="Trending Products" actionLabel="View All" onAction={() => navigate('/products?discount=high')}>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
-            {specialOffers.slice(0, 6).map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => navigate(`/product/${item.id}`)}
-                className="relative flex h-full flex-col rounded-lg sm:rounded-xl lg:rounded-2xl border-2 border-[#ccdfe2] bg-white p-2.5 text-left shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md"
-              >
-                {item.discount_percent > 0 ? (
-                  <span className="absolute right-3 top-3 rounded-full bg-gradient-to-r from-[#f01c71] to-[#ff4b92] px-3 py-1 text-[11px] font-bold text-white shadow-[0_6px_16px_rgba(240,28,113,0.28)]">
-                    {item.discount_percent}% OFF
-                  </span>
-                ) : null}
-               <div className="h-44 w-full flex items-center justify-center bg-white rounded-lg sm:rounded-lg lg:rounded-xl p-2">
-  <img
-    src={item.image_url ? `${API_BASE_URL}${item.image_url}` : '/placeholder-product.png'}
-    alt={item.name}
-    loading="lazy"
-    className="max-h-full max-w-full object-contain"
-  />
-</div>
-                <div className="mt-4 space-y-1.5">
-                  <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-[#1b3137]">{item.name}</h3>
-                  <p className="text-base font-bold text-[#0f6a73]">₹{item.price}</p>
-                </div>
-              </button>
-            ))}
-          </div>
-        </SectionShell> */}
+
+        
+
+          
+  
 
         <SectionShell
           title="Special Offers"
           actionLabel="View All"
           onAction={() => navigate('/special-offers')}
-        ></SectionShell>
+        >
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
+
+  {specialOffers.slice(0, 6).map((item) => (
+    <button
+      key={item.id}
+      type="button"
+      onClick={() => navigate(`/product/${item.id}`)}
+      className="relative flex h-full flex-col rounded-lg sm:rounded-xl lg:rounded-2xl border-2 border-[#ccdfe2] bg-white p-2.5 text-left shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md"
+    >
+      {item.discount_percent > 0 && (
+        <span className="absolute right-3 top-3 rounded-full bg-gradient-to-r from-[#f01c71] to-[#ff4b92] px-3 py-1 text-[11px] font-bold text-white shadow-[0_6px_16px_rgba(240,28,113,0.28)]">
+          {item.discount_percent}% OFF
+        </span>
+      )}
+
+      <div className="h-40 w-full flex items-center justify-center bg-white rounded-lg p-2">
+        <img
+          src={item.image_url ? `${API_BASE_URL}${item.image_url}` : "/placeholder-product.png"}
+          alt={item.name}
+          loading="lazy"
+          className="max-h-full max-w-full object-contain"
+        />
+      </div>
+
+      <div className="mt-4 space-y-1.5">
+        <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-[#1b3137]">
+          {item.name}
+        </h3>
+        <p className="text-base font-bold text-[#0f6a73]">
+          ₹{item.price}
+        </p>
+      </div>
+    </button>
+  ))}
+</div>
+        
+          {/*Special offer products go heare */}
+        </SectionShell>
 
         <SectionShell title="Shop by Character or Themes" tone="soft">
           {tagsLoading ? (
