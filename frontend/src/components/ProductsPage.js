@@ -19,6 +19,7 @@ const ProductsPage = () => {
   const [mobileFilterTop, setMobileFilterTop] = useState(0);
   const [cartQuantities, setCartQuantities] = useState({});
   const productRefs = useRef({});
+  const [categoryName, setCategoryName] = useState('');
 
   // 🔹 New state for sorting
   const [sortOrder, setSortOrder] = useState('none');
@@ -333,6 +334,12 @@ const ProductsPage = () => {
         url = `${API_BASE_URL}/api/products/by-subcategory/${encodeURIComponent(subcategory)}${cacheBuster}`;
       } else if (categoryId) {
         url = `${API_BASE_URL}/api/products/by-category/${categoryId}${cacheBuster}`;
+        try {
+          const catRes = await fetch(`${API_BASE_URL}/api/categories`);
+          const catData = await catRes.json();
+          const found = (Array.isArray(catData) ? catData : []).find(c => String(c.sno) === String(categoryId));
+          if (found) setCategoryName(found.category_name);
+        } catch (e) {}
       }
 
       const res = await fetch(url);
@@ -637,8 +644,8 @@ const ProductsPage = () => {
             ? `Products for ${age}`
             : subcategory
               ? subcategory.toUpperCase()
-              : category
-                ? 'Category Products'
+              : categoryId
+              ? (categoryName || 'Category Products')
                 : 'All Products';
 
   const clearAllFilters = () => {
