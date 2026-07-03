@@ -30,6 +30,9 @@ const Header = () => {
   const [mobileSubmenu, setMobileSubmenu] = useState(null);
   const [mobileSelectedCategory, setMobileSelectedCategory] = useState(null);
   const [mobileSubcategories, setMobileSubcategories] = useState([]);
+  const [mobileSelectedSubcategory, setMobileSelectedSubcategory] = useState(null);
+  const [mobileSubSubcategories, setMobileSubSubcategories] = useState([]);
+  const [loadingMobileSubSubcategories, setLoadingMobileSubSubcategories] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const headerRef = useRef(null);
   const typingTimer = useRef(null);
@@ -276,13 +279,15 @@ useEffect(() => {
       if (subs.length === 0) {
         setEmptyCategoryIds(prev => new Set([...prev, categoryId]));
       }
+      return subs;
     } catch (error) {
       console.error('Error fetching subcategories:', error);
       setSubcategories([]);
+      return [];
     }
   };
 
-  const handleSelectSubcategory = async (categoryId, subcategory) => {
+  const handleSelectSubcategory = async (categoryId, subcategory, navigateOnClick = false) => {
     setSelectedSubcategory(subcategory);
     setLoadingSubSubcategories(true);
     setSubSubcategories([]);
@@ -291,17 +296,25 @@ useEffect(() => {
       const data = await response.json();
       const nested = Array.isArray(data?.subSubcategories) ? data.subSubcategories : [];
       setSubSubcategories(nested);
-      if (!nested.length) {
-        navigate(`/products/by-subcategory/${encodeURIComponent(subcategory.subcategory_name)}`);
-        setHoveredCategory(null);
-        setSubcategories([]);
-        setSubSubcategories([]);
-        setSelectedSubcategory(null);
-        setActiveDropdown(null);
+
+      if (navigateOnClick) {
+        if (!nested.length) {
+          navigate(`/products/by-subcategory/${encodeURIComponent(subcategory.subcategory_name)}`);
+          setHoveredCategory(null);
+          setSubcategories([]);
+          setSubSubcategories([]);
+          setSelectedSubcategory(null);
+          setActiveDropdown(null);
+        } else {
+          navigate(`/products/by-subcategory/${encodeURIComponent(subcategory.subcategory_name)}`);
+        }
       }
     } catch (error) {
       console.error('Error fetching sub-subcategories:', error);
       setSubSubcategories([]);
+      if (navigateOnClick) {
+        navigate(`/products/by-subcategory/${encodeURIComponent(subcategory.subcategory_name)}`);
+      }
     } finally {
       setLoadingSubSubcategories(false);
     }
@@ -318,6 +331,8 @@ useEffect(() => {
 
   const handleMobileSelectCategory = async (categoryId, categoryName) => {
     setMobileSelectedCategory({ id: categoryId, name: categoryName });
+    setMobileSelectedSubcategory(null);
+    setMobileSubSubcategories([]);
     try {
       const response = await fetch(`${API_BASE_URL}/api/categories/${categoryId}/subcategories`);
       const data = await response.json();
@@ -325,6 +340,39 @@ useEffect(() => {
     } catch (error) {
       console.error('Error fetching mobile subcategories:', error);
       setMobileSubcategories([]);
+    }
+    navigate(`/products/by-category/${categoryId}`);
+  };
+
+  const handleMobileSelectSubcategory = async (categoryId, subcategory, navigateOnClick = false) => {
+    setMobileSelectedSubcategory(subcategory);
+    setLoadingMobileSubSubcategories(true);
+    setMobileSubSubcategories([]);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/categories/${categoryId}/subcategories/${subcategory.sno}/sub-subcategories`);
+      const data = await response.json();
+      const nested = Array.isArray(data?.subSubcategories) ? data.subSubcategories : [];
+      setMobileSubSubcategories(nested);
+      if (navigateOnClick) {
+        if (!nested.length) {
+          navigate(`/products/by-subcategory/${encodeURIComponent(subcategory.subcategory_name)}`);
+          setMobileMenuOpen(false);
+          setMobileSubmenu(null);
+          setMobileSelectedCategory(null);
+          setMobileSubcategories([]);
+          setMobileSelectedSubcategory(null);
+        } else {
+          navigate(`/products/by-subcategory/${encodeURIComponent(subcategory.subcategory_name)}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching mobile sub-subcategories:', error);
+      setMobileSubSubcategories([]);
+      if (navigateOnClick) {
+        navigate(`/products/by-subcategory/${encodeURIComponent(subcategory.subcategory_name)}`);
+      }
+    } finally {
+      setLoadingMobileSubSubcategories(false);
     }
   };
 
@@ -434,25 +482,23 @@ useEffect(() => {
                 Categories <ChevronDown size={12} strokeWidth={2.2} className={`transition-transform duration-200 ${activeDropdown === 'categories' ? 'rotate-180' : ''}`} />
               </button>
               {activeDropdown === 'categories' && (
-                <div className="absolute left-0 top-full z-50 mt-3 flex w-[min(760px,calc(100vw-1rem))] overflow-hidden rounded-2xl bg-white shadow-soft ring-1 ring-black/5" onClick={(event) => event.stopPropagation()} onMouseEnter={() => cancelDropdownClose()} onMouseLeave={() => scheduleDropdownClose('categories')}>
-                  <div className="w-2/5 max-h-[360px] overflow-y-auto border-r border-[#ede6d9] bg-[#fffdf8] p-4">
+                <div className="absolute left-0 top-full z-50 mt-3 flex w-[min(700px,calc(100vw-1rem))] overflow-hidden rounded-2xl bg-white shadow-soft ring-1 ring-black/5" onClick={(event) => event.stopPropagation()} onMouseEnter={() => cancelDropdownClose()} onMouseLeave={() => scheduleDropdownClose('categories')}>
+                  <div className="w-1/2 max-h-[360px] overflow-y-auto border-r border-[#ede6d9] bg-[#fffdf8] p-5">
                     <ul className="m-0 flex list-none flex-col gap-1 p-0">
                       {categories.map((category) => (
                         <li
                           key={category.sno}
                           className={`flex cursor-pointer items-center justify-between rounded-xl px-3 py-3 text-sm font-medium transition hover:bg-[#fff7eb] ${hoveredCategory === category.sno ? 'bg-[#fff7eb] text-[#2e79e3]' : ''}`}
                           onMouseEnter={() => handleMouseEnter(category.sno)}
-                          onClick={(event) => {
+                          onClick={async (event) => {
                             event.stopPropagation();
-                            handleMouseEnter(category.sno);
                             setHoveredCategory(category.sno);
-  // Navigate directly if no subcategories
-                            setTimeout(() => {
-                              if (subcategories.length === 0) {
-                                navigate(`/products/by-category/${category.sno}`);
-                                setActiveDropdown(null);
-                              }
-                            }, 300);
+                            setActiveDropdown('categories');
+                            const subs = await handleMouseEnter(category.sno);
+                            navigate(`/products/by-category/${category.sno}`);
+                            if (!subs.length) {
+                              setActiveDropdown(null);
+                            }
                           }}
                         >
                           {category.category_name}
@@ -463,49 +509,44 @@ useEffect(() => {
                       ))}
                     </ul>
                   </div>
-                  <div className="w-3/5 max-h-[360px] overflow-y-auto p-4">
-                    {selectedSubcategory ? (
-                      <div>
-                        <button
-                          type="button"
-                          className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#2e79e3]"
-                          onClick={() => setSelectedSubcategory(null)}
-                        >
-                          <ChevronRight size={12} className="rotate-180" /> Back to subcategories
-                        </button>
-                        <div className="mb-3 text-sm font-semibold text-[#273c2e]">{selectedSubcategory.subcategory_name}</div>
-                        {loadingSubSubcategories ? (
-                          <div className="px-3 py-6 text-center text-sm text-[#888]">Loading sub-subcategories...</div>
-                        ) : subSubcategories.length > 0 ? (
-                          <ul className="m-0 list-none p-0">
-                            {subSubcategories.map((item) => (
-                              <li
-                                key={item.id}
-                                className="flex cursor-pointer items-center justify-between rounded-xl px-3 py-3 text-sm font-medium transition hover:bg-[#fff7eb]"
-                                onClick={() => handleNavigateCategory(item.sub_subcategory_name)}
-                              >
-                                {item.sub_subcategory_name} <ChevronRight size={11} className="text-[#2e79e3]" />
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <div className="px-3 py-6 text-center text-sm text-[#888]">No further subcategories found.</div>
+                  <div className="flex w-1/2">
+                  <div className="w-1/2 max-h-[360px] overflow-y-auto border-r border-[#ede6d9] p-2">
+                  <ul className="m-0 list-none p-0">
+                    {subcategories.length > 0 ? subcategories.map((subcategory) => (
+                      <li
+                      key={subcategory.sno}
+                      className={`flex cursor-pointer items-center justify-between rounded-xl px-3 py-2 text-sm font-medium transition hover:bg-[#fff7eb] ${selectedSubcategory?.sno === subcategory.sno ? 'bg-[#fff7eb] text-[#2e79e3]' : ''}`}
+                      onMouseEnter={() => handleSelectSubcategory(hoveredCategory, subcategory)}
+                      onClick={() => {
+                        navigate(`/products/by-subcategory/${encodeURIComponent(subcategory.subcategory_name)}`);
+                        setActiveDropdown(null);
+                      }}
+        >
+                      {subcategory.subcategory_name}
+                      {selectedSubcategory?.sno === subcategory.sno && subSubcategories.length > 0 && (
+                        <ChevronRight size={11} className="text-[#2e79e3]" />
                         )}
-                      </div>
-                    ) : (
-                      <ul className="m-0 list-none p-0">
-                        {subcategories.length > 0 ? subcategories.map((subcategory) => (
-                          <li
-                            key={subcategory.sno}
-                            className="flex cursor-pointer items-center justify-between rounded-xl px-3 py-3 text-sm font-medium transition hover:bg-[#fff7eb]"
-                            onClick={() => handleSelectSubcategory(hoveredCategory, subcategory)}
-                          >
-                            {subcategory.subcategory_name} <ChevronRight size={11} className="text-[#2e79e3]" />
-                          </li>
-                        )) : <li className="px-3 py-6 text-center text-sm text-[#888]">Hover a category to view subcategories</li>}
+                        </li>
+                      )) : <li className="px-3 py-6 text-center text-sm text-[#888]">Hover a category to view subcategories</li>}
                       </ul>
-                    )}
-                  </div>
+                      </div>
+                      <div className="w-1/2 max-h-[360px] overflow-y-auto p-2">
+                      <ul className="m-0 list-none p-0">
+                        {subSubcategories.length > 0 ? subSubcategories.map((item) => (
+                          <li
+                          key={item.id}
+                          className="cursor-pointer rounded-xl px-3 py-2 text-sm font-medium transition hover:bg-[#fff7eb]"
+                          onClick={() => {
+                            navigate(`/products/by-subcategory/${encodeURIComponent(item.sub_subcategory_name)}`);
+                            setActiveDropdown(null);
+                          }}
+        >                 
+                          {item.sub_subcategory_name}
+                          </li>
+                        )) : null}
+                        </ul>
+                        </div>
+                        </div>
                 </div>
               )}
             </li>
@@ -675,6 +716,38 @@ useEffect(() => {
                           <li className="px-4 py-2 text-sm text-[#888]">Loading categories...</li>
                         )}
                       </ul>
+                    ) : mobileSelectedSubcategory ? (
+                      <div>
+                        <button type="button" className="mb-3 flex items-center gap-2 text-sm font-medium text-[#2e79e3]" onClick={() => { setMobileSelectedSubcategory(null); setMobileSubSubcategories([]); }}>
+                          <ChevronDown size={16} className="rotate-90" /> Back to Subcategories
+                        </button>
+                        <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#273c2e]">{mobileSelectedSubcategory.subcategory_name}</h4>
+                        {loadingMobileSubSubcategories ? (
+                          <div className="px-4 py-2 text-sm text-[#888]">Loading options...</div>
+                        ) : mobileSubSubcategories.length > 0 ? (
+                          <ul className="flex flex-col gap-1">
+                            {mobileSubSubcategories.map((subSub) => (
+                              <li
+                                key={subSub.sno || subSub.id}
+                                className="cursor-pointer rounded-xl px-4 py-2 text-sm font-medium text-[#273c2e] transition hover:bg-[#fff7eb]"
+                                onClick={() => {
+                                  navigate(`/products/by-subcategory/${encodeURIComponent(subSub.subcategory_name || subSub.sub_subcategory_name)}`);
+                                  setMobileMenuOpen(false);
+                                  setMobileSubmenu(null);
+                                  setMobileSelectedCategory(null);
+                                  setMobileSubcategories([]);
+                                  setMobileSelectedSubcategory(null);
+                                  setMobileSubSubcategories([]);
+                                }}
+                              >
+                                {subSub.subcategory_name || subSub.sub_subcategory_name}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <div className="px-4 py-2 text-sm text-[#888]">No further subcategories available</div>
+                        )}
+                      </div>
                     ) : (
                       <div>
                         <button type="button" className="mb-3 flex items-center gap-2 text-sm font-medium text-[#2e79e3]" onClick={() => { setMobileSelectedCategory(null); setMobileSubcategories([]); }}>
@@ -687,15 +760,12 @@ useEffect(() => {
                               <li
                                 key={subcategory.sno}
                                 className="cursor-pointer rounded-xl px-4 py-2 text-sm font-medium text-[#273c2e] transition hover:bg-[#fff7eb]"
-                                onClick={() => {
-                                  navigate(`/products/by-subcategory/${encodeURIComponent(subcategory.subcategory_name)}`);
-                                  setMobileMenuOpen(false);
-                                  setMobileSubmenu(null);
-                                  setMobileSelectedCategory(null);
-                                  setMobileSubcategories([]);
-                                }}
+                                onClick={() => handleMobileSelectSubcategory(mobileSelectedCategory.id, subcategory, true)}
                               >
-                                {subcategory.subcategory_name}
+                                <div className="flex items-center justify-between">
+                                  {subcategory.subcategory_name}
+                                  <ChevronRight size={16} className="text-[#2e79e3]" />
+                                </div>
                               </li>
                             ))
                           ) : (
