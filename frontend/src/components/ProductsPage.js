@@ -58,6 +58,7 @@ const ProductsPage = () => {
   // 🔹 Extract URL query parameters
   const searchParams = new URLSearchParams(location.search);
   const { categoryId, subcategory: subcategoryParam } = useParams();
+  const { subSubcategoryId: subSubcategoryIdParam } = useParams();
   const subcategory = subcategoryParam?.toLowerCase() || '';
   const searchTerm = searchParams.get('search')?.toLowerCase() || '';
   const tagId = searchParams.get('tag') || '';
@@ -68,6 +69,8 @@ const ProductsPage = () => {
   const isNewArrivalsPage = searchParams.get("new") === "true";
   const discount = searchParams.get("discount") || "";
   const hasTag = searchParams.get("hasTag") === "true";
+  const subSubcategoryId = searchParams.get('subSubcategoryId') || '';
+  const subSubcategoryName = searchParams.get('name') || '';
 
 
   useEffect(() => {
@@ -284,6 +287,14 @@ const ProductsPage = () => {
 
       // Cache buster to ensure fresh data
       const cacheBuster = `?t=${Date.now()}`;
+      // Sub-subcategory page
+      if (location.pathname.includes('/by-sub-subcategory/')) {
+        const id = location.pathname.split('/by-sub-subcategory/')[1];
+        const res = await fetch(`${API_BASE_URL}/api/products/by-sub-subcategory/${id}${cacheBuster}`);
+        const data = await res.json();
+        setProducts(data.products || []);
+        return;
+      }
 
       // 🥇 PRIORITY 1: Specific tag (Marvel, DC, etc.)
       if (tagId) {
@@ -644,6 +655,8 @@ const ProductsPage = () => {
             ? `Products for ${age}`
             : subcategory
               ? subcategory.toUpperCase()
+              : location.pathname.includes('/by-sub-subcategory/')
+                ? (subSubcategoryName || 'Products')
               : categoryId
               ? (categoryName || 'Category Products')
                 : 'All Products';

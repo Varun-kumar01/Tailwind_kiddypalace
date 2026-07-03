@@ -56,6 +56,7 @@ const [updatingBrand, setUpdatingBrand] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
+  const [subSubCategories, setSubSubCategories] = useState([]);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newSubcategoryName, setNewSubcategoryName] = useState('');
   const [selectedParentCategoryId, setSelectedParentCategoryId] = useState('');
@@ -655,6 +656,18 @@ const fetchSubcategories = async () => {
     setAllSubcategories(data);
   } catch (err) {
     console.error('Error fetching subcategories:', err);
+  }
+};
+const fetchSubSubCategories = async (subcategoryId) => {
+  try {
+    const res = await fetch(
+      `${API_BASE_URL}/api/sub-subcategories/${subcategoryId}`
+    );
+
+    const data = await res.json();
+    setSubSubCategories(data);
+  } catch (err) {
+    console.error("Error fetching sub subcategories:", err);
   }
 };
 
@@ -2615,7 +2628,15 @@ if (isVerifying) {
                       id="subcategory_id"
                       name="subcategory_id"
                       value={newProduct.subcategory_id || ''}
-                      onChange={(e) => setNewProduct({ ...newProduct, subcategory_id: e.target.value })}
+                      onChange={(e) => {
+                        const subcategoryId = e.target.value;
+                        setNewProduct({
+                          ...newProduct,
+                          subcategory_id: subcategoryId,
+                          sub_subcategory_id: ""
+                        });
+                        fetchSubSubCategories(subcategoryId);
+                      }}
                       required
                       className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                     >
@@ -2625,6 +2646,23 @@ if (isVerifying) {
                       ))}
                     </select>
                   </div>
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="sub_subcategory_id" className="block text-sm font-medium text-slate-700 mb-2">Sub Subcategory *</label>
+                    <select
+                      id="sub_subcategory_id"
+                      name="sub_subcategory_id"
+                      value={newProduct.sub_subcategory_id || ''}
+                      onChange={(e) => setNewProduct({ ...newProduct, sub_subcategory_id: e.target.value})}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                   >
+                      <option value="">Select Sub Subcategory</option>
+                      {subSubCategories.map(subSub => (
+                        <option key={subSub.id} value={subSub.id}>{subSub.sub_subcategory_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
                
 
                 {/* Descriptions and Details */}

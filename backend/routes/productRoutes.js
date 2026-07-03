@@ -107,6 +107,8 @@ router.get('/products/customized', productController.getCustomizedProducts);
 // Must be before /products/:id
 router.get('/products/with-tags', productController.getProductsWithTags);
 
+router.get('/sub-subcategories/:subcategoryId', productController.getSubSubCategories);
+
 // // Update product images (must be before /products/:id)
 // router.put('/products/:id/image', uploadImage.any(), productController.updateProductImage);
 
@@ -185,7 +187,37 @@ router.get('/subcategories/:parentId/children', async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to fetch subcategories' });
   }
 });
-
+router.get('/products/by-sub-subcategory/:subSubcategoryId', async (req, res) => {
+  try {
+    const db = require('../config/db');
+    const { subSubcategoryId } = req.params;
+    const [products] = await db.query(
+      `SELECT * FROM products WHERE sub_subcategory_id = ? ORDER BY created_at DESC`,
+      [subSubcategoryId]
+    );
+    const productsWithImages = await Promise.all(
+      products.map(async (product) => {
+        let image_url = product.image_url;
+        if (!image_url) {
+          const [[firstImage]] = await db.query(
+            `SELECT image_url FROM product_images WHERE product_id = ? ORDER BY sort_order ASC LIMIT 1`,
+            [product.id]
+          );
+          image_url = firstImage?.image_url || null;
+        }
+        return {
+          ...product,
+          image_url,
+          discount_percent: Number(product.discount) || 0
+        };
+      })
+    );
+    res.json({ success: true, products: productsWithImages });
+  } catch (err) {
+    console.error('Error fetching products by sub-subcategory:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch products' });
+  }
+});
 router.get('/sub-subcategories/:subcategoryId', async (req, res) => {
   try {
     const db = require('../config/db');

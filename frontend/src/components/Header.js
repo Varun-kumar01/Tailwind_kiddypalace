@@ -537,7 +537,7 @@ useEffect(() => {
                           key={item.id}
                           className="cursor-pointer rounded-xl px-3 py-2 text-sm font-medium transition hover:bg-[#fff7eb]"
                           onClick={() => {
-                            navigate(`/products/by-subcategory/${encodeURIComponent(item.sub_subcategory_name)}`);
+                            navigate(`/products/by-sub-subcategory/${item.id}?name=${encodeURIComponent(item.sub_subcategory_name)}`);
                             setActiveDropdown(null);
                           }}
         >                 

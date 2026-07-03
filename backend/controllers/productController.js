@@ -50,7 +50,7 @@ exports.exportProducts = async (req, res) => {
     const columns = [
       'name', 'product_code', 'description', 'mrp', 'discount', 'price',
       'stock_quantity', 'brand_name', 'age_range', 'gender',
-      'category_id', 'subcategory_id'
+      'category_id', 'subcategory_id', 'sub_subcategory_id'
     ];
 
     const rows = products.map((p) => {
@@ -408,12 +408,12 @@ exports.getProductById = async (req, res) => {
     const [result] = await db.query(
       `INSERT INTO products
       (name, product_code, description, mrp, discount, price, image_url,
-       category_id, subcategory_id, stock_quantity, age_range, gender,
+       category_id, subcategory_id, sub_subcategory_id, stock_quantity, age_range, gender,
        brand_name, is_new_arrival)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         name, product_code, description || "", mrp, discount, price, image_url,
-        category_id || null, subcategory_id || null, stock_quantity || 0,
+        category_id || null, subcategory_id || null, sub_subcategory_id || null,stock_quantity || 0,
         age_range || "", gender || "", brand_name || "", is_new_arrival ? 1 : 0
       ]
     );
@@ -752,9 +752,9 @@ exports.importProducts = async (req, res) => {
           const result = await db.query(
             `INSERT INTO products
             (name, product_code, description, mrp, discount, price, image_url,
-             category_id, subcategory_id, stock_quantity, age_range, gender,
+             category_id, subcategory_id, sub_subcategory_id,stock_quantity, age_range, gender,
              brand_name, is_new_arrival)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            // VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               String(product.name).trim(), pcode, product.description || '', product.mrp || null, product.discount || null,
               price, null,
@@ -2234,6 +2234,24 @@ exports.getProductsBySubcategory = async (req, res) => {
 };
 
 // Get ProductsByTag
+exports.getSubSubCategories = async (req, res) => {
+  try {
+    const { subcategoryId } = req.params;
+
+    const [rows] = await db.query(
+      `SELECT id, sub_subcategory_name
+       FROM sub_subcategory
+       WHERE subcategory_id = ?
+       ORDER BY sub_subcategory_name`,
+      [subcategoryId]
+    );
+
+    res.json(rows);
+  } catch (error) {
+    console.error("Get sub-subcategories error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 exports.getProductsByTag = async (req, res) => {
   try {
@@ -2572,6 +2590,7 @@ exports.getProductsByTag = async (req, res) => {
 
 exports.uploadProductsFromExcel = async (req, res) => {
   try {
+    console.log("from excel//////////////");
     if (!req.file) return res.status(400).json({ message: "No file uploaded" });
 
     const workbook = xlsx.readFile(req.file.path);
@@ -2678,6 +2697,9 @@ exports.uploadProductsFromExcel = async (req, res) => {
           customized,
           product_code
         ];
+        console.log("sa raa//////////////////////////////////m")
+        console.log(updateParams)
+        console.log("sa ra////////////////////////////////////am")
 
         try {
           await db.query(
@@ -2740,9 +2762,9 @@ exports.uploadProductsFromExcel = async (req, res) => {
         const insertResult = await db.query(
           `INSERT INTO products 
             (name, product_code, description, mrp, discount, price, 
-             category_id, subcategory_id, stock_quantity, 
+             category_id, subcategory_id, sub_subcategory_id, stock_quantity, 
              brand_name, age_range, gender, customized)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)`,
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             name,
             product_code,
@@ -2752,6 +2774,7 @@ exports.uploadProductsFromExcel = async (req, res) => {
             price,
             Number.isNaN(category_id) ? null : category_id,
             Number.isNaN(subcategory_id) ? null : subcategory_id,
+            Number.isNaN(sub_subcategory_id) ? null : sub_subcategory_id,
             incoming_stock,
             brand_name,
             age_range,
@@ -2802,6 +2825,7 @@ exports.uploadProductsFromExcel = async (req, res) => {
 
 exports.uploadProductsFromExcelV2 = async (req, res) => {
   try {
+    console.log("from v2 excel ///////////////////")
     console.log('📁 Upload request received');
     console.log('File info:', req.file ? { name: req.file.originalname, path: req.file.path, size: req.file.size, mimetype: req.file.mimetype } : 'NO FILE');
 
@@ -2840,6 +2864,8 @@ exports.uploadProductsFromExcelV2 = async (req, res) => {
       return res.status(500).json({ success: false, message: 'Failed to parse Excel sheet', error: String(parseErr && (parseErr.stack || parseErr.message)) });
     }
 
+    console.log("data 1", data);
+
     if (!Array.isArray(data) || data.length === 0) {
       try { fs.unlinkSync(req.file.path); } catch (_) {}
       console.error('❌ Excel file is empty or invalid');
@@ -2856,6 +2882,7 @@ exports.uploadProductsFromExcelV2 = async (req, res) => {
     for (const [index, raw] of data.entries()) {
       const rowNumber = index + 2;
       const row = {};
+      console.log("row 2", row);
       for (const k in raw) row[k.toLowerCase()] = raw[k];
 
       const product_code = String(row.product_code || "").trim();
@@ -2882,10 +2909,14 @@ exports.uploadProductsFromExcelV2 = async (req, res) => {
       let subcategory_id = row.subcategory_id !== undefined && row.subcategory_id !== "" ? Number(row.subcategory_id) :
         row.subcategory !== undefined && row.subcategory !== "" ? Number(row.subcategory) : null;
 
-      // Validate foreign keys: ensure category and subcategory exist in DB before using them
+        
+        let sub_subcategory_id = row.sub_subcategory_id !== undefined && row.sub_subcategory_id !== "" ? Number(row.sub_subcategory_id) :
+        row.sub_subcategory !== undefined && row.sub_subcategory !== "" ? Number(row.sub_subcategory) : null;
+        
+        console.log("sub_subcategory_id 3", sub_subcategory_id);
+      // Validate foreign keys: ensure category, subcategory and sub-subcategory exist in DB before using them
       try {
         if (category_id !== null && !Number.isNaN(category_id)) {
-          // try common category table names
           const checkCatQueries = [
             "SELECT id FROM categories WHERE id = ? LIMIT 1",
             "SELECT id FROM category WHERE id = ? LIMIT 1",
@@ -2907,19 +2938,44 @@ exports.uploadProductsFromExcelV2 = async (req, res) => {
 
         if (subcategory_id !== null && !Number.isNaN(subcategory_id)) {
           try {
-            const [r] = await db.query("SELECT sno FROM subcategory WHERE sno = ? LIMIT 1", [subcategory_id]);
-            if (!Array.isArray(r) || r.length === 0) subcategory_id = null;
+            let found = false;
+            const [r] = await db.query("SELECT id FROM subcategory WHERE id = ? LIMIT 1", [subcategory_id]);
+            if (Array.isArray(r) && r.length > 0) {
+              found = true;
+            } else {
+              const [r2] = await db.query("SELECT sno FROM subcategory WHERE sno = ? LIMIT 1", [subcategory_id]);
+              if (Array.isArray(r2) && r2.length > 0) found = true;
+            }
+            if (!found) subcategory_id = null;
           } catch (e) {
-            // If table doesn't exist or query fails, fallback to null
             subcategory_id = null;
           }
         } else {
           subcategory_id = null;
         }
+
+        if (sub_subcategory_id !== null && !Number.isNaN(sub_subcategory_id)) {
+          try {
+            let found = false;
+            const [r] = await db.query("SELECT id FROM sub_subcategory WHERE id = ? LIMIT 1", [sub_subcategory_id]);
+            if (Array.isArray(r) && r.length > 0) {
+              found = true;
+            } else {
+              const [r2] = await db.query("SELECT sno FROM sub_subcategory WHERE sno = ? LIMIT 1", [sub_subcategory_id]);
+              if (Array.isArray(r2) && r2.length > 0) found = true;
+            }
+            if (!found) sub_subcategory_id = null;
+          } catch (e) {
+            sub_subcategory_id = null;
+          }
+        } else {
+          sub_subcategory_id = null;
+        }
       } catch (fkCheckErr) {
         console.warn('FK validation failed, continuing with nulls', fkCheckErr?.message || fkCheckErr);
         category_id = null;
         subcategory_id = null;
+        sub_subcategory_id = null;
       }
 
       const incoming_stock = row.stock_quantity !== undefined ? Number(row.stock_quantity || 0) : null;
@@ -2932,7 +2988,6 @@ exports.uploadProductsFromExcelV2 = async (req, res) => {
       if (row.tag_ids) {
         tagIds = String(row.tag_ids).split(",").map(t => Number(t.trim())).filter(t => !isNaN(t));
       }
-
       const customized = row.customized !== undefined
         ? ((row.customized === 1 || row.customized === "1" || String(row.customized).toLowerCase() === "true") ? 1 : 0)
         : 0;
@@ -2968,6 +3023,7 @@ exports.uploadProductsFromExcelV2 = async (req, res) => {
           price,
           Number.isNaN(category_id) ? null : category_id,
           Number.isNaN(subcategory_id) ? null : subcategory_id,
+          Number.isNaN(sub_subcategory_id) ? null : sub_subcategory_id,
           brand_name,
           age_range,
           gender,
@@ -2980,7 +3036,7 @@ exports.uploadProductsFromExcelV2 = async (req, res) => {
           await db.query(
             `UPDATE products SET 
               name=?, description=?, mrp=?, discount=?, price=?, 
-              category_id=?, subcategory_id=?, brand_name=?, age_range=?, gender=?, 
+              category_id=?, subcategory_id=?, sub_subcategory_id=?, brand_name=?, age_range=?, gender=?, 
               stock_quantity=?, customized=?
             WHERE product_code=?`,
             updateParams
@@ -2990,10 +3046,11 @@ exports.uploadProductsFromExcelV2 = async (req, res) => {
             console.warn(`Row ${rowNumber}: FK constraint on UPDATE, nulling FKs and retrying`);
             updateParams[5] = null; // category_id
             updateParams[6] = null; // subcategory_id
+            updateParams[7] = null; // sub_subcategory_id
             await db.query(
               `UPDATE products SET 
                 name=?, description=?, mrp=?, discount=?, price=?, 
-                category_id=?, subcategory_id=?, brand_name=?, age_range=?, gender=?, 
+                category_id=?, subcategory_id=?, sub_subcategory_id=?, brand_name=?, age_range=?, gender=?, 
                 stock_quantity=?, customized=?
               WHERE product_code=?`,
               updateParams
@@ -3028,6 +3085,7 @@ exports.uploadProductsFromExcelV2 = async (req, res) => {
           price,
           Number.isNaN(category_id) ? null : category_id,
           Number.isNaN(subcategory_id) ? null : subcategory_id,
+          Number.isNaN(sub_subcategory_id) ? null : sub_subcategory_id,
           incoming_stock || 0,
           brand_name,
           age_range,
@@ -3035,14 +3093,16 @@ exports.uploadProductsFromExcelV2 = async (req, res) => {
           customized
         ];
 
+        console.log("*****************")
+        console.log(insertParams);
         let insertResult;
         try {
           insertResult = await db.query(
             `INSERT INTO products 
               (name, product_code, description, mrp, discount, price, 
-               category_id, subcategory_id, stock_quantity, 
+               category_id, subcategory_id, sub_subcategory_id, stock_quantity, 
                brand_name, age_range, gender, customized)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)`,
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             insertParams
           );
         } catch (errInsert) {
@@ -3050,12 +3110,13 @@ exports.uploadProductsFromExcelV2 = async (req, res) => {
             console.warn(`Row ${rowNumber}: FK constraint error, nulling FKs and retrying`);
             insertParams[6] = null; // category_id
             insertParams[7] = null; // subcategory_id
+            insertParams[8] = null; // sub_subcategory_id
             insertResult = await db.query(
               `INSERT INTO products 
                 (name, product_code, description, mrp, discount, price, 
-                 category_id, subcategory_id, stock_quantity, 
+                 category_id, subcategory_id, sub_subcategory_id, stock_quantity, 
                  brand_name, age_range, gender, customized)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)`,
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
               insertParams
             );
           } else {
@@ -3181,6 +3242,7 @@ exports.uploadProductsFromExcelV2 = async (req, res) => {
         writeCsv(acceptedProductsCombined, acceptedCsvName);
         // XLSX
         try {
+
           // Ensure product_code is string for all rows so Excel treats the cell as text
           const normalized = acceptedProductsCombined.map(r => ({ ...r, product_code: r.product_code != null ? String(r.product_code) : '' }));
           const ws = xlsx.utils.json_to_sheet(normalized);
@@ -3312,7 +3374,7 @@ exports.getProductsUploadTemplate = async (req, res) => {
   } catch (err) {
     console.error('Error sending template:', err);
     // Fallback to a conservative header set to ensure download works
-    const fallback = ['name','product_code','description','mrp','discount','price','stock_quantity','brand_name','category_id','subcategory_id'];
+    const fallback = ['name','product_code','description','mrp','discount','price','stock_quantity','brand_name','category_id','subcategory_id','sub_subcategory_id'];
     try {
       res.setHeader('Content-Type', 'text/csv');
       res.setHeader('Content-Disposition', 'attachment; filename="products_template.csv"');
