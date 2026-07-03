@@ -19,17 +19,12 @@ export const useCart = () => {
 };
 
 export const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState(() => {
-  const savedCart = localStorage.getItem("cart");
-  return savedCart ? JSON.parse(savedCart) : [];
-});
-useEffect(() => {
-  localStorage.setItem("cart", JSON.stringify(cartItems));
-}, [cartItems]);
+  const [cartItems, setCartItems] = useState([]);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [cartToast, setCartToast] = useState({ show: false, message: '' });
   const toastTimeoutRef = useRef(null);
   const prevUserIdRef = useRef(null);
+  const hasLoadedCartRef = useRef(false);
 
   const getUserIdFromLocalStorage = () => {
     try {
@@ -59,12 +54,18 @@ useEffect(() => {
       const userId = getUserIdFromLocalStorage();
       setCurrentUserId(userId);
     };
+
+    const onStorage = (e) => {
+      if (e.key === 'user' || e.key === 'token') {
+        onUserChanged();
+      }
+    };
+
     window.addEventListener('user-changed', onUserChanged);
-    window.addEventListener('storage', (e) => {
-      if (e.key === 'user') onUserChanged();
-    });
+    window.addEventListener('storage', onStorage);
     return () => {
       window.removeEventListener('user-changed', onUserChanged);
+      window.removeEventListener('storage', onStorage);
     };
   }, []);
 
@@ -72,40 +73,141 @@ useEffect(() => {
   useEffect(() => {
     if (prevUserIdRef.current === currentUserId) return;
     prevUserIdRef.current = currentUserId;
-    try {
-      const key = getCartStorageKey(currentUserId);
-      const savedCart = localStorage.getItem(key);
-      if (savedCart) {
+
+    const normalizeCart = (cartArray) => {
+      return cartArray.map(item => ({
+        id: item.id,
+        name: item.name || '',
+        price: Number(item.price) || 0,
+        original_price: Number(item.original_price) || Number(item.price) || 0,
+        quantity: Number(item.quantity) || 1,
+        image: item.image || item.image_url || item.imageUrl || '',
+        image_url: item.image_url || item.image || item.imageUrl || '',
+        description: item.description || '',
+        age_range: item.age_range || '',
+        stock_quantity: item.stock_quantity || 999,
+      }));
+    };
+
+    const loadLocalCart = (key) => {
+      try {
+        const savedCart = localStorage.getItem(key);
+        if (!savedCart) return [];
         const parsedCart = JSON.parse(savedCart);
         const cartArray = Array.isArray(parsedCart) ? parsedCart : [];
-        // Ensure all items have required fields
-        const normalizedCart = cartArray.map(item => ({
-          id: item.id,
-          name: item.name || '',
-          price: Number(item.price) || 0,
-          original_price: Number(item.original_price) || Number(item.price) || 0,
-          quantity: Number(item.quantity) || 1,
-          image: item.image || item.image_url || item.imageUrl || '',
-          image_url: item.image_url || item.image || item.imageUrl || '',
-          description: item.description || '',
-          age_range: item.age_range || '',
-          stock_quantity: item.stock_quantity || 999,
-        }));
-        setCartItems(normalizedCart);
-      } else {
-        setCartItems([]);
+        return normalizeCart(cartArray);
+      } catch (error) {
+        console.error('Error loading cart from localStorage:', error);
+        return [];
       }
-    } catch (error) {
-      console.error('Error loading cart from localStorage:', error);
-      setCartItems([]);
-    }
+    };
+
+    const mergeCarts = (baseCart, incomingCart) => {
+      const merged = [...baseCart];
+      incomingCart.forEach((item) => {
+        const existing = merged.find((cartItem) => String(cartItem.id) === String(item.id));
+        if (existing) {
+          existing.quantity = Number(existing.quantity || 0) + Number(item.quantity || 0);
+        } else {
+          merged.push(item);
+        }
+      });
+      return merged;
+    };
+
+    const loadCartForUser = async () => {
+      if (!currentUserId) {
+        setCartItems(loadLocalCart('cart:guest'));
+        hasLoadedCartRef.current = true;
+        return;
+      }
+
+      const userKey = getCartStorageKey(currentUserId);
+      const localUserCart = loadLocalCart(userKey);
+      const guestCart = loadLocalCart('cart:guest');
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        setCartItems(localUserCart.length ? localUserCart : guestCart);
+        hasLoadedCartRef.current = true;
+        return;
+      }
+
+      try {
+        const response = await fetch(`${process.env.REACT_APP_API_BASE || 'http://localhost:5000'}/api/cart`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to load cart from server');
+        }
+
+        const result = await response.json();
+        const serverCart = Array.isArray(result.cart) ? result.cart : [];
+
+        if (localUserCart.length && serverCart.length) {
+          const mergedCart = mergeCarts(serverCart, localUserCart);
+          setCartItems(mergedCart);
+          await fetch(`${process.env.REACT_APP_API_BASE || 'http://localhost:5000'}/api/cart`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ cartItems: mergedCart }),
+          }).catch((err) => console.error('Error syncing merged cart to server:', err));
+          localStorage.setItem(userKey, JSON.stringify(mergedCart));
+        } else if (serverCart.length) {
+          const mergedCart = guestCart.length ? mergeCarts(serverCart, guestCart) : serverCart;
+          setCartItems(mergedCart);
+          if (guestCart.length) {
+            await fetch(`${process.env.REACT_APP_API_BASE || 'http://localhost:5000'}/api/cart`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ cartItems: mergedCart }),
+            }).catch((err) => console.error('Error syncing merged guest cart to server:', err));
+            localStorage.setItem(userKey, JSON.stringify(mergedCart));
+            localStorage.removeItem('cart:guest');
+          }
+        } else if (localUserCart.length) {
+          setCartItems(localUserCart);
+        } else if (guestCart.length) {
+          setCartItems(guestCart);
+          await fetch(`${process.env.REACT_APP_API_BASE || 'http://localhost:5000'}/api/cart`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ cartItems: guestCart }),
+          }).catch((err) => console.error('Error saving guest cart to server:', err));
+          localStorage.setItem(userKey, JSON.stringify(guestCart));
+          localStorage.removeItem('cart:guest');
+        } else {
+          setCartItems([]);
+        }
+      } catch (error) {
+        console.error('Error fetching server cart:', error);
+        setCartItems(localUserCart.length ? localUserCart : guestCart);
+      }
+
+      hasLoadedCartRef.current = true;
+    };
+
+    loadCartForUser();
   }, [currentUserId]);
 
   // Save cart to localStorage whenever it changes for the current user key
   useEffect(() => {
     try {
       const key = getCartStorageKey(currentUserId);
-
       const safeItems = cartItems.map((item) => ({
         id: item.id,
         name: item.name,
@@ -119,10 +221,23 @@ useEffect(() => {
         stock_quantity: item.stock_quantity || 999,
         mrp: item.mrp,
       }));
-
       localStorage.setItem(key, JSON.stringify(safeItems));
+
+      const token = localStorage.getItem('token');
+      if (currentUserId && token && hasLoadedCartRef.current) {
+        fetch(`${process.env.REACT_APP_API_BASE || 'http://localhost:5000'}/api/cart`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ cartItems: safeItems }),
+        }).catch((err) => {
+          console.error('Error syncing cart to server:', err);
+        });
+      }
     } catch (err) {
-      console.error("Error saving cart to localStorage:", err);
+      console.error('Error saving cart to localStorage:', err);
     }
   }, [cartItems, currentUserId]);
 
@@ -194,6 +309,14 @@ useEffect(() => {
 
   // ✅ Add to Cart
   const addToCart = (product, quantity = 1) => {
+    if (!currentUserId) {
+      showCartToast('Please login before adding items to cart.');
+      window.setTimeout(() => {
+        window.location.href = '/login';
+      }, 1200);
+      return;
+    }
+
     const normalizedProduct = normalizeProduct(product);
     setCartItems((prevItems) => {
       const existingItem = prevItems.find((item) => item.id === normalizedProduct.id);
@@ -232,7 +355,19 @@ useEffect(() => {
   const clearCart = useCallback(() => {
     setCartItems([]);
     localStorage.removeItem(getCartStorageKey(currentUserId));
-  }, []);
+    const token = localStorage.getItem('token');
+    if (currentUserId && token) {
+      fetch(`${process.env.REACT_APP_API_BASE || 'http://localhost:5000'}/api/cart`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }).catch((err) => {
+        console.error('Error clearing cart on server:', err);
+      });
+    }
+  }, [currentUserId]);
 
   // ✅ Cart total and count helpers
   const getCartTotal = () => {

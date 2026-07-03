@@ -19,6 +19,7 @@ const shippingRoutes = require('./routes/shippingRoutes');
 const brandRoutes = require('./routes/brands');
 const settingsRoutes = require('./routes/settingRoutes');
 const tagRoutes = require('./routes/tags'); // 👈 ADDED
+const cartRoutes = require('./routes/cartRoutes');
 
 const ensureAboutTable = async () => {
   try {
@@ -93,9 +94,29 @@ const ensureProductImagesTable = async () => {
   }
 };
 
+const ensureUserCartsTable = async () => {
+  try {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS user_carts (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        cart_data LONGTEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uniq_user_id (user_id),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+    console.log('✅ user_carts table is ready');
+  } catch (err) {
+    console.error('Error ensuring user_carts table:', err.message);
+  }
+};
+
 ensureAboutTable();
 ensureCareersTable();
 ensureProductImagesTable();
+ensureUserCartsTable();
 
 
 
@@ -125,6 +146,7 @@ app.use('/api/admin', adminAuthRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api', productRoutes);
+app.use('/api/cart', cartRoutes);
 app.use('/api', categoryRoutes);
 app.use('/api', paymentRoutes);
 app.use('/api/products', productRoutes);

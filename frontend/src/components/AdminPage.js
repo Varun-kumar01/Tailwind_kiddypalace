@@ -15,8 +15,6 @@ const getAdminHeaders = () => {
   };
 };
 
-
-
 const AdminPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -58,6 +56,8 @@ const [updatingBrand, setUpdatingBrand] = useState(false);
   const [subcategories, setSubcategories] = useState([]);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newSubcategoryName, setNewSubcategoryName] = useState('');
+  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState('');
+const [newSubSubcategoryName, setNewSubSubcategoryName] = useState(''); 
   const [selectedParentCategoryId, setSelectedParentCategoryId] = useState('');
   const [adminOrders, setAdminOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
@@ -636,6 +636,52 @@ const handleAddSubcategory = async (e) => {
   } catch (err) {
     const msg = err?.response?.data?.message || 'Failed to add subcategory';
     showToast(msg, 'error');
+  }
+};
+
+const handleAddSubSubcategory = async (e) => {
+  e.preventDefault();
+
+  if (!selectedParentCategoryId)
+    return showToast('⚠️ Select category', 'error');
+
+  if (!selectedSubcategoryId)
+    return showToast('⚠️ Select subcategory', 'error');
+
+  if (!newSubSubcategoryName.trim())
+    return showToast('⚠️ Sub-Subcategory name required', 'error');
+
+  const token = localStorage.getItem('adminToken');
+  if (!token)
+    return showToast('⚠️ Please login as admin', 'error');
+
+  try {
+    const res = await axios.post(
+      `${API_BASE_URL}/api/sub-subcategories`,
+      {
+        category_id: selectedParentCategoryId,
+        subcategory_id: selectedSubcategoryId,
+        sub_subcategory_name: newSubSubcategoryName.trim()
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    if (res.data.success) {
+      showToast('✅ Sub-Subcategory added');
+      setNewSubSubcategoryName('');
+    } else {
+      showToast(res.data.message, 'error');
+    }
+
+  } catch (err) {
+    showToast(
+      err.response?.data?.message || 'Failed to add Sub-Subcategory',
+      'error'
+    );
   }
 };
 
@@ -3321,7 +3367,7 @@ if (isVerifying) {
   <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_24px_60px_rgba(39,60,46,0.12)] sm:p-8">
     <h2 className="mb-5 text-2xl font-black text-slate-900">Categories & Subcategories</h2>
 
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
         <h3 className="mb-3 text-lg font-bold text-slate-900">Add Category</h3>
         <form onSubmit={handleAddCategory} className="flex flex-col gap-2 sm:flex-row">
@@ -3364,7 +3410,69 @@ if (isVerifying) {
         </form>
       </section>
     </div>
+<section className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+  <h3 className="mb-3 text-lg font-bold text-slate-900">
+    Add Sub-Subcategory
+  </h3>
 
+  <form
+    onSubmit={handleAddSubSubcategory}
+    className="grid grid-cols-1 gap-2"
+  >
+
+    <select
+      value={selectedParentCategoryId}
+      onChange={(e) => setSelectedParentCategoryId(e.target.value)}
+      className="rounded-lg border border-slate-300 bg-white px-3 py-2.5"
+    >
+      <option value="">Select Category</option>
+
+      {categories.map((category) => (
+        <option key={category.sno} value={category.sno}>
+          {category.category_name}
+        </option>
+      ))}
+
+    </select>
+
+    <select
+      value={selectedSubcategoryId}
+      onChange={(e) => setSelectedSubcategoryId(e.target.value)}
+      className="rounded-lg border border-slate-300 bg-white px-3 py-2.5"
+    >
+      <option value="">Select Subcategory</option>
+
+      {subcategories
+        .filter(
+          (sub) =>
+            Number(sub.category_id) ===
+            Number(selectedParentCategoryId)
+        )
+        .map((sub) => (
+          <option key={sub.sno} value={sub.sno}>
+            {sub.subcategory_name}
+          </option>
+        ))}
+    </select>
+
+    <input
+      type="text"
+      placeholder="Sub-Subcategory Name"
+      value={newSubSubcategoryName}
+      onChange={(e) =>
+        setNewSubSubcategoryName(e.target.value)
+      }
+      className="rounded-lg border border-slate-300 bg-white px-3 py-2.5"
+    />
+
+    <button
+      className="rounded-lg bg-blue-600 py-2 text-white font-semibold hover:bg-blue-700"
+    >
+      Add
+    </button>
+
+  </form>
+</section>
     <div className="mb-3 mt-5">
       <input
         placeholder="Search categories or subcategories"

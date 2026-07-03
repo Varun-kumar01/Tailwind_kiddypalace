@@ -26,6 +26,51 @@ router.get('/subcategories', async (req, res) => {
   }
 });
 
+// ✅ Get all sub-subcategories
+router.get('/sub-subcategories', async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT
+        ss.*,
+        s.subcategory_name,
+        c.category_name
+      FROM sub_subcategory ss
+      JOIN subcategory s ON ss.subcategory_id = s.sno
+      JOIN category c ON ss.category_id = c.sno
+      ORDER BY ss.sub_subcategory_name ASC
+    `);
+
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching sub-subcategories:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching sub-subcategories'
+    });
+  }
+});
+// ✅ Get sub-subcategories by subcategory
+router.get('/subcategories/:id/sub-subcategories', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [rows] = await pool.query(
+      `SELECT * FROM sub_subcategory
+       WHERE subcategory_id = ?
+       ORDER BY sub_subcategory_name ASC`,
+      [id]
+    );
+
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching sub-subcategories'
+    });
+  }
+});
+
 // ✅ Get subcategories by category_id
 router.get('/categories/:id/subcategories', async (req, res) => {
   const { id } = req.params;
@@ -195,6 +240,90 @@ router.post('/subcategories', authenticateAdmin, async (req, res) => {
   } catch (err) {
     console.error('Error adding subcategory:', err);
     res.status(500).json({ success: false, message: 'Error adding subcategory' });
+  }
+});
+
+// Add new sub-subcategory (admin only)
+router.post('/sub-subcategories', authenticateAdmin, async (req, res) => {
+  const { sub_subcategory_name, category_id, subcategory_id } = req.body;
+
+  if (
+    !sub_subcategory_name ||
+    !sub_subcategory_name.trim() ||
+    !category_id ||
+    !subcategory_id
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: 'sub_subcategory_name, category_id and subcategory_id are required'
+    });
+  }
+
+  try {
+    // Check category
+    const [cat] = await pool.query(
+      'SELECT * FROM category WHERE sno = ?',
+      [category_id]
+    );
+
+    if (cat.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Category not found'
+      });
+    }
+
+    // Check subcategory
+    const [sub] = await pool.query(
+      'SELECT * FROM subcategory WHERE sno = ?',
+      [subcategory_id]
+    );
+
+    if (sub.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Subcategory not found'
+      });
+    }
+
+    // Check duplicate
+    const [existing] = await pool.query(
+      `SELECT * FROM sub_subcategory
+       WHERE LOWER(sub_subcategory_name)=LOWER(?)
+       AND subcategory_id=?`,
+      [sub_subcategory_name.trim(), subcategory_id]
+    );
+
+    if (existing.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: 'Sub-Subcategory already exists'
+      });
+    }
+
+    // Insert
+    await pool.query(
+      `INSERT INTO sub_subcategory
+      (sub_subcategory_name, category_id, subcategory_id)
+      VALUES (?, ?, ?)`,
+      [
+        sub_subcategory_name.trim(),
+        category_id,
+        subcategory_id
+      ]
+    );
+
+    res.json({
+      success: true,
+      message: 'Sub-Subcategory added successfully'
+    });
+
+  } catch (err) {
+    console.error('Error adding sub-subcategory:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Error adding sub-subcategory'
+    });
   }
 });
 

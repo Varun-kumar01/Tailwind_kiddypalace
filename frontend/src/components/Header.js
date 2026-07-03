@@ -14,6 +14,9 @@ const Header = () => {
   const [brands, setBrands] = useState([]);
   const [hoveredCategory, setHoveredCategory] = useState(null);
   const [subcategories, setSubcategories] = useState([]);
+  const [selectedSubcategory, setSelectedSubcategory] = useState(null);
+const [subSubcategories, setSubSubcategories] = useState([]);
+const [loadingSubSubcategories, setLoadingSubSubcategories] = useState(false);
   const [emptyCategoryIds, setEmptyCategoryIds] = useState(new Set());
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [searchOpen, setSearchOpen] = useState(false);
