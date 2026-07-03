@@ -38,6 +38,21 @@ router.get('/categories/:id/subcategories', async (req, res) => {
   }
 });
 
+// ✅ Get nested sub-subcategories by parent subcategory
+router.get('/categories/:categoryId/subcategories/:subcategoryId/sub-subcategories', async (req, res) => {
+  const { subcategoryId } = req.params;
+  try {
+    const [rows] = await pool.query(
+      'SELECT * FROM subcategory WHERE parent_id = ? ORDER BY subcategory_name ASC',
+      [subcategoryId]
+    );
+    res.json({ success: true, subSubcategories: rows });
+  } catch (err) {
+    console.error('Error fetching sub-subcategories:', err);
+    res.status(500).json({ message: 'Error fetching sub-subcategories' });
+  }
+});
+
 // ✅ Get products by subcategory name to id
 router.get('/products/by-subcategory/:subcategory', async (req, res) => {
   const { subcategory } = req.params;

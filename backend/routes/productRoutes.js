@@ -170,6 +170,52 @@ router.get('/products/:id', productController.getProductById);
 
 // Get products by subcategory (MUST be before /products/:id)
 router.get('/products/subcategory/:subcategoryId', productController.getProductsBySubcategory);
+router.get('/subcategories/:parentId/children', async (req, res) => {
+  try {
+    const db = require('../config/db');
+    const { parentId } = req.params;
+    const [rows] = await db.query(
+      'SELECT * FROM subcategory WHERE parent_id = ? ORDER BY subcategory_name ASC',
+      [parentId]
+    );
+    res.json({ success: true, subcategories: rows });
+  } catch (err) {
+    console.error('Error fetching child subcategories:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch subcategories' });
+  }
+});
+
+router.get('/sub-subcategories/:subcategoryId', async (req, res) => {
+  try {
+    const db = require('../config/db');
+    const { subcategoryId } = req.params;
+    const [rows] = await db.query(
+      'SELECT * FROM sub_subcategory WHERE subcategory_id = ? ORDER BY sub_subcategory_name ASC',
+      [subcategoryId]
+    );
+    res.json({ success: true, subSubcategories: rows });
+  } catch (err) {
+    console.error('Error fetching sub-subcategories:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch sub-subcategories' });
+  }
+});
+
+router.get('/categories/:categoryId/subcategories/:subcategoryId/sub-subcategories', async (req, res) => {
+  try {
+    const db = require('../config/db');
+    const { subcategoryId } = req.params;
+    const [rows] = await db.query(
+      'SELECT * FROM sub_subcategory WHERE subcategory_id = ? ORDER BY sub_subcategory_name ASC',
+      [subcategoryId]
+    );
+    res.json({ success: true, subSubcategories: rows });
+  } catch (err) {
+    console.error('Error fetching sub-subcategories:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch sub-subcategories' });
+  }
+});
+  
+
 
 //get products by character or themes (MUST be before /products/:id)
 router.get("/products/by-tag/:tagId", productController.getProductsByTag);
