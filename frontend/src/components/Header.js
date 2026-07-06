@@ -388,7 +388,7 @@ useEffect(() => {
   console.log("Categories:", categories.length);
   console.log("Brands:", brands.length);
   return (
-    <header ref={headerRef} className="sticky top-0 z-[1200] w-full">
+    <header ref={headerRef} className="fixed top-0 z-[1200] w-full">
       <div className="relative z-[1001] bg-[#2e79e3] px-3 py-2 text-[#fff7eb] sm:px-4">
         <div className="flex items-center justify-between gap-2">
           <div className="flex-shrink-0 text-sm font-semibold sm:text-base">📞 +91 70750 04435</div>

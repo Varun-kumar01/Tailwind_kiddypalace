@@ -97,7 +97,7 @@ const TrendingProductsPage = () => {
       <main className="mx-auto w-full max-w-[1440px] flex-1 px-3 py-4 md:px-5">
         {/* Products Section - Full Width */}
         <section className="min-h-[600px]">
-          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="sticky top-32 z-50 mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h1 className="text-2xl font-extrabold tracking-tight text-[#273c2e] sm:text-[1.7rem]">🔥 Trending Products (Best Sellers)</h1>
 
             {/* 🔹 Sort By Dropdown */}
@@ -194,6 +194,17 @@ const TrendingProductsPage = () => {
                           <span className="text-base font-bold text-black">
                             ₹{product.price || product.mrp}
                           </span>
+                        )}
+                      </div>
+
+                      <div className="mt-2 flex flex-wrap gap-2 items-center">
+                        <p className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${product.stock_quantity > 0 ? 'bg-[#e8f1ff] text-[#2e79e3]' : 'bg-rose-50 text-rose-700'}`}>
+                          {product.stock_quantity > 0 ? 'In Stock' : 'Out of Stock'}
+                        </p>
+                        {product.age_range && (
+                          <p className="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold bg-[#fef3c7] text-[#b45309]">
+                            {product.age_range}
+                          </p>
                         )}
                       </div>
 

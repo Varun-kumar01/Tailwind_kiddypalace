@@ -768,18 +768,18 @@ const ProductsPage = () => {
       <main className="mx-auto w-full max-w-[1440px] flex-1 px-3 py-4 md:px-5 md:py-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
           {/* Sidebar Filters */}
-          <aside className="hidden h-fit rounded-2xl border border-[#d8e5e7] bg-[#eaf2f3 ] p-4 shadow-[0_8px_24px_rgba(27,49,55,0.08)] lg:sticky lg:top-36 lg:block lg:w-[270px]">
+          <aside className="hidden h-fit rounded-2xl border border-[#d8e5e7] bg-[#eaf2f3 ] p-4 shadow-[0_8px_24px_rgba(27,49,55,0.08)] lg:sticky lg:top-32 lg:block lg:w-[270px]">
             <div>{renderFilters(false)}</div>
           </aside>
 
           {/* Products Section */}
           <section className="min-h-[600px] flex-1">
-            <div className="mb-4 rounded-2xl border border-[#d8e5e7] bg-white px-4 py-4 shadow-[0_8px_24px_rgba(27,49,55,0.06)] sm:px-5">
+            <div className="sticky top-32 z-50 mb-8 rounded-2xl border border-[#d8e5e7] bg-white px-4 py-4 shadow-[0_8px_24px_rgba(27,49,55,0.06)] sm:px-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h2 className="text-2xl font-extrabold tracking-tight text-[#1b3137] sm:text-3xl">
                   {pageTitle}
                 </h2>
-                {/* 🔹 Sort By Dropdown */}
+                {/* 🔹 Sort By Dropdown  */}
                 <div className="flex items-center gap-2 text-base font-semibold text-[#1b3137] sm:text-lg">
                   <button
                     type="button"
@@ -840,7 +840,7 @@ const ProductsPage = () => {
                 <p>No products found.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 ">
+              <div className="grid grid-cols-2 gap-3 pt-28 sm:gap-4 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                 {sortedProducts.map((product) => (
                   <div
                     key={product.id}
@@ -945,7 +945,16 @@ const ProductsPage = () => {
                           )}
                         </div>
 
-
+                        <div className="mt-2 flex flex-wrap gap-2 items-center">
+                          <p className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${product.stock_quantity > 0 ? 'bg-[#e8f1ff] text-[#2e79e3]' : 'bg-rose-50 text-rose-700'}`}>
+                            {product.stock_quantity > 0 ? 'In Stock' : 'Out of Stock'}
+                          </p>
+                          {product.age_range && (
+                            <p className="inline-flex rounded-full px-3 py-1 text-xs font-semibold bg-[#fef3c7] text-[#b45309]">
+                              {product.age_range}
+                            </p>
+                          )}
+                        </div>
 
                         <div className="mt-2.5 w-full h-[44px] flex items-center justify-center">
                           {cartQuantities[product.id] ? (
