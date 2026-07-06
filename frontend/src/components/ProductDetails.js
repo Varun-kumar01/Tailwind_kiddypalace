@@ -442,13 +442,13 @@ const handleClearMainImage = async () => {
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-white via-emerald-50/40 to-slate-50 text-slate-900">
       <Header />
 
-      <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 rounded-[28px] border border-emerald-100 bg-white/90 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur sm:p-6 lg:p-8">
-          <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)]">
-      <section className="flex flex-col lg:flex-row gap-4 w-full">
+      <main className="px-4 py-8 sm:px-6 lg:px-8 lg:py-10 mt-80">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 rounded-[28px] border border-emerald-100 bg-white/90 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur sm:p-6 lg:p-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:gap-8 w-full">
+      <section className="flex flex-col lg:flex-row gap-4 w-full lg:w-auto lg:flex-1">
 
   {/* 💻 DESKTOP THUMBNAILS (LEFT SIDE) */}
-  <div className="hidden lg:flex flex-col gap-3 overflow-y-auto max-h-[520px]">
+  <div className="hidden lg:flex flex-col gap-3 overflow-y-auto max-h-[500px]">
     {imageSources.map((img, i) => (
       <img
         key={img.id}
@@ -472,7 +472,7 @@ const handleClearMainImage = async () => {
       {imageSources.map((img, i) => (
         <div
           key={img.id}
-          className="min-w-full snap-center snap-always flex items-center justify-center h-[320px] sm:h-[420px] bg-slate-50 rounded-2xl"
+          className="min-w-full snap-center snap-always flex items-center justify-center h-[320px] sm:h-[380px] bg-slate-50 rounded-2xl"
         >
           <img
             src={img.url}
@@ -497,7 +497,7 @@ const handleClearMainImage = async () => {
     </div>
 
     {/* 💻 DESKTOP MAIN IMAGE */}
-    <div className="hidden lg:flex items-center justify-center h-[520px] bg-slate-50 rounded-2xl">
+    <div className="hidden lg:flex items-center justify-center h-[550px] bg-slate-50 rounded-2xl">
       {imageSources.length > 0 && (
         <img
           src={imageSources[currentIndex]?.url}
@@ -510,7 +510,7 @@ const handleClearMainImage = async () => {
 
 </section>
 
-            <section className="flex flex-col items-start rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 overflow-y-auto h-full">
+            <section className="flex flex-col items-start rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 lg:flex-1 lg:overflow-visible">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
                 {product.brand_name || product.brand || 'Brand Name'}
               </p>
@@ -546,9 +546,16 @@ const handleClearMainImage = async () => {
                 })()}
               </div>
 
-              <p className={`mt-4 inline-flex rounded-full px-3 py-1 text-sm font-semibold ${product.stock_quantity > 0 ? 'bg-[#e8f1ff] text-[#2e79e3]' : 'bg-rose-50 text-rose-700'}`}>
-                {product.stock_quantity > 0 ? 'In Stock' : 'Out of Stock'}
-              </p>
+              <div className="mt-4 flex flex-wrap gap-2 items-center">
+                <p className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold ${product.stock_quantity > 0 ? 'bg-[#e8f1ff] text-[#2e79e3]' : 'bg-rose-50 text-rose-700'}`}>
+                  {product.stock_quantity > 0 ? 'In Stock' : 'Out of Stock'}
+                </p>
+                {product.age_range && (
+                  <p className="inline-flex rounded-full px-3 py-1 text-sm font-semibold bg-[#fef3c7] text-[#b45309]">
+                    {product.age_range}
+                  </p>
+                )}
+              </div>
 
               <div className="mt-6 flex w-full flex-wrap items-center gap-3">
                 {product.stock_quantity > 0 ? (
