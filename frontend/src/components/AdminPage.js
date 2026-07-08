@@ -56,10 +56,12 @@ const [updatingBrand, setUpdatingBrand] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
-  const [subSubCategories, setSubSubCategories] = useState([]);
+  const [subSubcategories, setSubSubcategories] = useState([]);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newSubcategoryName, setNewSubcategoryName] = useState('');
   const [selectedParentCategoryId, setSelectedParentCategoryId] = useState('');
+  const [newSubSubcategoryName, setNewSubSubcategoryName] = useState('');
+  const [selectedParentSubcategoryForSubSub, setSelectedParentSubcategoryForSubSub] = useState('');
   const [adminOrders, setAdminOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [ordersError, setOrdersError] = useState("");
@@ -378,14 +380,22 @@ const handleBulkProductUpload = async (e) => {
     );
 
     if (response.data && response.data.success) {
-      const saved = response.data.savedCount || 0;
-      const updated = response.data.updatedCount || 0;
-      const totalSaved = response.data.acceptedCount || saved + updated;
-      setBulkMessage(`✅ Processed ${response.data.totalRows} rows. New saved: ${saved}, Updated: ${updated}, Rejected: ${response.data.rejectedCount}`);
+      const totalRows = response.data.totalRows ?? response.data.total ?? 0;
+      const saved = response.data.savedCount ?? response.data.inserted ?? 0;
+      const updated = response.data.updatedCount ?? response.data.updated ?? 0;
+      const rejected = response.data.rejectedCount ?? response.data.rejected ?? 0;
+      const acceptedRows = response.data.acceptedRows ?? [
+        ...(response.data.insertedProducts || []),
+        ...(response.data.updatedProducts || [])
+      ];
+      const rejectedRows = response.data.rejectedRows ?? response.data.unprocessedProducts ?? [];
+      const totalSaved = acceptedRows.length;
+
+      setBulkMessage(`✅ Processed ${totalRows} rows. New saved: ${saved}, Updated: ${updated}, Rejected: ${rejected}`);
       setAcceptedReportUrl(response.data.acceptedFileUrl);
       setRejectedReportUrl(response.data.rejectedFileUrl);
-      setAcceptedRowsPreview(response.data.acceptedRows || []);
-      setRejectedRowsPreview(response.data.rejectedRows || []);
+      setAcceptedRowsPreview(acceptedRows);
+      setRejectedRowsPreview(rejectedRows);
       // Refresh product list if any saved/updated
       if (totalSaved > 0) fetchProducts();
       // Refresh upload history
@@ -494,6 +504,7 @@ const handleBrandFilesChange = (e) => {
   product_highlights: '',
   category_id: '',
   subcategory_id: '',
+  sub_subcategory_id: '',
   stock_quantity: '',
   discount: '',
   mrp: ''
@@ -581,12 +592,30 @@ useEffect(() => {
 
 const handleCategoryChange = (e) => {
   const categoryId = e.target.value;
-  setNewProduct({ ...newProduct, category_id: categoryId });
+  setNewProduct({ ...newProduct, category_id: categoryId, subcategory_id: '', sub_subcategory_id: '' });
+  setSubSubcategories([]);
+
+  if (!categoryId) {
+    setSubcategories([]);
+    return;
+  }
 
   // fetch subcategories
   fetch(`${API_BASE_URL}/api/categories/${categoryId}/subcategories`)
     .then(res => res.json())
     .then(data => setSubcategories(data));
+};
+
+const handleSubcategoryChange = (e) => {
+  const subcategoryId = e.target.value;
+  setNewProduct({ ...newProduct, subcategory_id: subcategoryId, sub_subcategory_id: '' });
+  setSubSubcategories([]);
+
+  if (!subcategoryId || !newProduct.category_id) return;
+
+  fetch(`${API_BASE_URL}/api/categories/${newProduct.category_id}/subcategories/${subcategoryId}/sub-subcategories`)
+    .then(res => res.json())
+    .then(data => setSubSubcategories(data.subSubcategories || []));
 };
 
 // Add category & subcategory handlers
@@ -640,13 +669,38 @@ const handleAddSubcategory = async (e) => {
   }
 };
 
+const handleAddSubSubcategory = async (e) => {
+  e.preventDefault();
+  if (!selectedParentCategoryId) return showToast('⚠️ Select parent category', 'error');
+  if (!selectedParentSubcategoryForSubSub) return showToast('⚠️ Select parent subcategory', 'error');
+  if (!newSubSubcategoryName.trim()) return showToast('⚠️ Sub-subcategory name required', 'error');
+  const token = localStorage.getItem('adminToken');
+  if (!token) return showToast('⚠️ Please login as admin', 'error');
+  try {
+    const res = await axios.post(`${API_BASE_URL}/api/sub-subcategories`, { sub_subcategory_name: newSubSubcategoryName.trim(), category_id: selectedParentCategoryId, subcategory_id: selectedParentSubcategoryForSubSub }, { headers: { Authorization: `Bearer ${token}` } });
+    if (res.data?.success) {
+      showToast('✅ Sub-subcategory added');
+      setNewSubSubcategoryName('');
+      fetchSubSubcategories();
+      window.dispatchEvent(new Event('categories-updated'));
+    } else {
+      showToast(res.data?.message || 'Failed to add sub-subcategory', 'error');
+    }
+  } catch (err) {
+    const msg = err?.response?.data?.message || 'Failed to add sub-subcategory';
+    showToast(msg, 'error');
+  }
+};
+
 // Categories management: additional state & helpers
 const [showCategoriesPanel, setShowCategoriesPanel] = useState(false);
 const [categoriesSearch, setCategoriesSearch] = useState('');
 const [allSubcategories, setAllSubcategories] = useState([]);
+const [allSubSubcategories, setAllSubSubcategories] = useState([]);
 const [editing, setEditing] = useState(null); // { type: 'category'|'subcategory', id }
 const [editName, setEditName] = useState('');
 const [editParentCategoryId, setEditParentCategoryId] = useState('');
+const [editParentSubcategoryId, setEditParentSubcategoryId] = useState('');
 const [loadingCategoryAction, setLoadingCategoryAction] = useState(false);
 
 const fetchSubcategories = async () => {
@@ -671,9 +725,20 @@ const fetchSubSubCategories = async (subcategoryId) => {
   }
 };
 
+const fetchSubSubcategories = async () => {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/sub-subcategories`);
+    const data = await res.json();
+    setAllSubSubcategories(data);
+  } catch (err) {
+    console.error('Error fetching sub-subcategories:', err);
+  }
+};
+
 useEffect(() => {
   // refresh subcategories when panel opens
   if (showCategoriesPanel) fetchSubcategories();
+  if (showCategoriesPanel) fetchSubSubcategories();
 }, [showCategoriesPanel]);
 
 // When user navigates to the Categories tab, refresh lists
@@ -681,6 +746,7 @@ useEffect(() => {
   if (activeTab === 'categories') {
     fetchCategories();
     fetchSubcategories();
+    fetchSubSubcategories();
     setCategoriesSearch('');
   }
 }, [activeTab]);
@@ -690,6 +756,7 @@ const startEdit = (type, item) => {
   setEditing({ type, id: item.id });
   setEditName(item.name || '');
   setEditParentCategoryId(item.category_id || '');
+  setEditParentSubcategoryId(item.subcategory_id || '');
 };
 
 const cancelEdit = () => {
@@ -720,10 +787,19 @@ const saveEdit = async () => {
         showToast(res.data?.message || 'Failed to update subcategory', 'error');
       }
     }
+    else if (editing.type === 'subsub') {
+      const res = await axios.put(`${API_BASE_URL}/api/sub-subcategories/${editing.id}`, { sub_subcategory_name: editName, category_id: editParentCategoryId, subcategory_id: editParentSubcategoryId }, { headers: getAdminHeaders() });
+      if (res.data?.success) {
+        showToast('✅ Sub-subcategory updated');
+      } else {
+        showToast(res.data?.message || 'Failed to update sub-subcategory', 'error');
+      }
+    }
 
     // Refresh lists
     fetchCategories();
     fetchSubcategories();
+    fetchSubSubcategories();
     window.dispatchEvent(new Event('categories-updated'));
     cancelEdit();
   } catch (err) {
@@ -742,11 +818,17 @@ const deleteItem = async (type, id) => {
       const res = await axios.delete(`${API_BASE_URL}/api/categories/${id}`, { headers: getAdminHeaders() });
       if (res.data?.success) showToast('✅ Category deleted'); else showToast(res.data?.message || 'Failed to delete', 'error');
     } else {
-      const res = await axios.delete(`${API_BASE_URL}/api/subcategories/${id}`, { headers: getAdminHeaders() });
-      if (res.data?.success) showToast('✅ Subcategory deleted'); else showToast(res.data?.message || 'Failed to delete', 'error');
+      if (type === 'subsubcategory' || type === 'subsub') {
+        const res = await axios.delete(`${API_BASE_URL}/api/sub-subcategories/${id}`, { headers: getAdminHeaders() });
+        if (res.data?.success) showToast('✅ Sub-subcategory deleted'); else showToast(res.data?.message || 'Failed to delete', 'error');
+      } else {
+        const res = await axios.delete(`${API_BASE_URL}/api/subcategories/${id}`, { headers: getAdminHeaders() });
+        if (res.data?.success) showToast('✅ Subcategory deleted'); else showToast(res.data?.message || 'Failed to delete', 'error');
+      }
     }
     fetchCategories();
     fetchSubcategories();
+    fetchSubSubcategories();
     window.dispatchEvent(new Event('categories-updated'));
   } catch (err) {
     const msg = err?.response?.data?.message || 'Failed to delete';
@@ -1046,6 +1128,9 @@ const handleBulkImageUpload = async (e) => {
     formData.append('price', newProduct.product_price);
     formData.append('category_id', newProduct.category_id || null);
     formData.append('subcategory_id', newProduct.subcategory_id || null);
+    if (newProduct.sub_subcategory_id) {
+      formData.append('sub_subcategory_id', newProduct.sub_subcategory_id);
+    }
     formData.append('stock_quantity', newProduct.stock_quantity || 0);
     formData.append('age_range', newProduct.age_range || '');
     formData.append('gender', newProduct.gender || '');
@@ -1078,11 +1163,12 @@ const handleBulkImageUpload = async (e) => {
       product_code: '',
       product_price: '',
       product_brand: '',
-      description: '',
+      product_description: '',
       age_range: '',
       gender: '',
       specifications: '',
-    
+      product_details: '',
+      sub_subcategory_id: '',
       brand_name: '',
       product_highlights: '',
       category_id: '',
@@ -2628,15 +2714,7 @@ if (isVerifying) {
                       id="subcategory_id"
                       name="subcategory_id"
                       value={newProduct.subcategory_id || ''}
-                      onChange={(e) => {
-                        const subcategoryId = e.target.value;
-                        setNewProduct({
-                          ...newProduct,
-                          subcategory_id: subcategoryId,
-                          sub_subcategory_id: ""
-                        });
-                        fetchSubSubCategories(subcategoryId);
-                      }}
+                      onChange={handleSubcategoryChange}
                       required
                       className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                     >
@@ -2646,24 +2724,22 @@ if (isVerifying) {
                       ))}
                     </select>
                   </div>
+
                   <div className="flex flex-col gap-2">
-                    <label htmlFor="sub_subcategory_id" className="block text-sm font-medium text-slate-700 mb-2">Sub Subcategory *</label>
+                    <label htmlFor="sub_subcategory_id" className="text-sm font-semibold text-slate-700">Sub-Subcategory</label>
                     <select
                       id="sub_subcategory_id"
                       name="sub_subcategory_id"
                       value={newProduct.sub_subcategory_id || ''}
-                      onChange={(e) => setNewProduct({ ...newProduct, sub_subcategory_id: e.target.value})}
+                      onChange={(e) => setNewProduct({ ...newProduct, sub_subcategory_id: e.target.value })}
                       className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                   >
-                      <option value="">Select Sub Subcategory</option>
-                      {subSubCategories.map(subSub => (
-                        <option key={subSub.id} value={subSub.id}>{subSub.sub_subcategory_name}
-                        </option>
+                    >
+                      <option value="">Select Sub-Subcategory</option>
+                      {subSubcategories.map(subsub => (
+                        <option key={subsub.id} value={subsub.id}>{subsub.sub_subcategory_name}</option>
                       ))}
                     </select>
                   </div>
-                  
-               
 
                 {/* Descriptions and Details */}
                 {/* <div className="form-row"> */}
@@ -3359,7 +3435,7 @@ if (isVerifying) {
   <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_24px_60px_rgba(39,60,46,0.12)] sm:p-8">
     <h2 className="mb-5 text-2xl font-black text-slate-900">Categories & Subcategories</h2>
 
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
         <h3 className="mb-3 text-lg font-bold text-slate-900">Add Category</h3>
         <form onSubmit={handleAddCategory} className="flex flex-col gap-2 sm:flex-row">
@@ -3401,6 +3477,45 @@ if (isVerifying) {
           <button className="min-h-[42px] rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">Add</button>
         </form>
       </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <h3 className="mb-3 text-lg font-bold text-slate-900">Add Sub-subcategory</h3>
+        <form onSubmit={handleAddSubSubcategory} className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr,1fr,1fr,auto]">
+          <select
+            value={selectedParentCategoryId}
+            onChange={(e) => { setSelectedParentCategoryId(e.target.value); setSelectedParentSubcategoryForSubSub(''); }}
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+          >
+            <option value="">Parent Category</option>
+            {categories.map(c => (
+              <option key={c.sno} value={c.sno}>
+                {c.category_name}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={selectedParentSubcategoryForSubSub}
+            onChange={(e) => setSelectedParentSubcategoryForSubSub(e.target.value)}
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+          >
+            <option value="">Parent Subcategory</option>
+            {allSubcategories.filter(s => String(s.category_id) === String(selectedParentCategoryId)).map(s => (
+              <option key={s.sno} value={s.sno}>{s.subcategory_name}</option>
+            ))}
+          </select>
+
+          <input
+            type="text"
+            placeholder="Sub-subcategory name"
+            value={newSubSubcategoryName}
+            onChange={(e) => setNewSubSubcategoryName(e.target.value)}
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+          />
+
+          <button className="min-h-[42px] rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">Add</button>
+        </form>
+      </section>
     </div>
 
     <div className="mb-3 mt-5">
@@ -3412,7 +3527,7 @@ if (isVerifying) {
       />
     </div>
 
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
       <section className="rounded-2xl border border-slate-200 bg-white p-4">
         <h3 className="mb-3 text-base font-bold text-slate-900">Categories</h3>
         {(() => {
@@ -3486,6 +3601,62 @@ if (isVerifying) {
                       <div className="flex gap-2">
                         <button className="min-h-[38px] rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700" onClick={() => startEdit("subcategory", { id: sub.sno, name: sub.subcategory_name, category_id: sub.category_id })}>Edit</button>
                         <button className="min-h-[38px] rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-700" onClick={() => deleteItem("subcategory", sub.sno)}>Delete</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-4">
+        <h3 className="mb-3 text-base font-bold text-slate-900">Sub-subcategories</h3>
+        {(() => {
+          const q = categoriesSearch.trim().toLowerCase();
+          const matched = q ? allSubSubcategories.filter(s => s.sub_subcategory_name.toLowerCase().includes(q)) : allSubSubcategories;
+          if (matched.length === 0) return <div className="rounded-lg bg-slate-50 p-3 text-sm text-slate-500">No sub-subcategories found</div>;
+          return (
+            <div className="space-y-2">
+              {matched.map(sub => (
+                <div key={sub.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  {editing?.type === "subsub" && editing.id === sub.id ? (
+                    <div className="grid grid-cols-1 gap-2 lg:grid-cols-[1fr,1fr,1fr,auto]">
+                      <input
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                      />
+                      <select
+                        value={editParentCategoryId}
+                        onChange={(e) => setEditParentCategoryId(e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                      >
+                        {categories.map(c => (
+                          <option key={c.sno} value={c.sno}>{c.category_name}</option>
+                        ))}
+                      </select>
+                      <select
+                        value={editParentSubcategoryId}
+                        onChange={(e) => setEditParentSubcategoryId(e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                      >
+                        {allSubcategories.filter(s => String(s.category_id) === String(editParentCategoryId)).map(s => (
+                          <option key={s.sno} value={s.sno}>{s.subcategory_name}</option>
+                        ))}
+                      </select>
+                      <div className="flex gap-2">
+                        <button className="min-h-[40px] rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700" onClick={saveEdit}>Save</button>
+                        <button className="min-h-[40px] rounded-lg bg-slate-500 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-600" onClick={cancelEdit}>Cancel</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-sm text-slate-800">{sub.sub_subcategory_name}</span>
+                      <div className="flex gap-2">
+                        <button className="min-h-[38px] rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700" onClick={() => startEdit("subsub", { id: sub.id, name: sub.sub_subcategory_name, category_id: sub.category_id, subcategory_id: sub.subcategory_id })}>Edit</button>
+                        <button className="min-h-[38px] rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-700" onClick={() => deleteItem("subsub", sub.id)}>Delete</button>
                       </div>
                     </div>
                   )}

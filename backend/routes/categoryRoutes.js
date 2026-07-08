@@ -42,14 +42,84 @@ router.get('/categories/:id/subcategories', async (req, res) => {
 router.get('/categories/:categoryId/subcategories/:subcategoryId/sub-subcategories', async (req, res) => {
   const { subcategoryId } = req.params;
   try {
+    // Use dedicated sub_subcategory table (schema: id, sub_subcategory_name, category_id, subcategory_id)
     const [rows] = await pool.query(
-      'SELECT * FROM subcategory WHERE parent_id = ? ORDER BY subcategory_name ASC',
+      'SELECT * FROM sub_subcategory WHERE subcategory_id = ? ORDER BY sub_subcategory_name ASC',
       [subcategoryId]
     );
     res.json({ success: true, subSubcategories: rows });
   } catch (err) {
     console.error('Error fetching sub-subcategories:', err);
     res.status(500).json({ message: 'Error fetching sub-subcategories' });
+  }
+});
+
+// ✅ Get all sub-subcategories
+router.get('/sub-subcategories', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM sub_subcategory ORDER BY sub_subcategory_name ASC');
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching sub-subcategories:', err);
+    res.status(500).json({ message: 'Error fetching sub-subcategories' });
+  }
+});
+
+// Add new sub-subcategory (admin only)
+router.post('/sub-subcategories', authenticateAdmin, async (req, res) => {
+  const { sub_subcategory_name, category_id, subcategory_id } = req.body;
+  if (!sub_subcategory_name || !sub_subcategory_name.trim() || !category_id || !subcategory_id) {
+    return res.status(400).json({ success: false, message: 'sub_subcategory_name, category_id and subcategory_id are required' });
+  }
+  try {
+    const [cats] = await pool.query('SELECT * FROM category WHERE sno = ?', [category_id]);
+    if (cats.length === 0) return res.status(404).json({ success: false, message: 'Parent category not found' });
+    const [subs] = await pool.query('SELECT * FROM subcategory WHERE sno = ? AND category_id = ?', [subcategory_id, category_id]);
+    if (subs.length === 0) return res.status(404).json({ success: false, message: 'Parent subcategory not found for the given category' });
+    const [existing] = await pool.query('SELECT * FROM sub_subcategory WHERE LOWER(sub_subcategory_name) = LOWER(?) AND subcategory_id = ? AND category_id = ?', [sub_subcategory_name.trim(), subcategory_id, category_id]);
+    if (existing.length > 0) return res.status(409).json({ success: false, message: 'Sub-subcategory already exists for this subcategory' });
+    await pool.query('INSERT INTO sub_subcategory (sub_subcategory_name, category_id, subcategory_id) VALUES (?, ?, ?)', [sub_subcategory_name.trim(), category_id, subcategory_id]);
+    res.json({ success: true, message: 'Sub-subcategory added' });
+  } catch (err) {
+    console.error('Error adding sub-subcategory:', err);
+    res.status(500).json({ success: false, message: 'Error adding sub-subcategory' });
+  }
+});
+
+// Update a sub-subcategory (admin only)
+router.put('/sub-subcategories/:id', authenticateAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { sub_subcategory_name, category_id, subcategory_id } = req.body;
+  if (!sub_subcategory_name || !sub_subcategory_name.trim() || !category_id || !subcategory_id) return res.status(400).json({ success: false, message: 'sub_subcategory_name, category_id and subcategory_id are required' });
+  try {
+    const [existing] = await pool.query('SELECT * FROM sub_subcategory WHERE id = ?', [id]);
+    if (existing.length === 0) return res.status(404).json({ success: false, message: 'Sub-subcategory not found' });
+    const [cats] = await pool.query('SELECT * FROM category WHERE sno = ?', [category_id]);
+    if (cats.length === 0) return res.status(404).json({ success: false, message: 'Parent category not found' });
+    const [subs] = await pool.query('SELECT * FROM subcategory WHERE sno = ? AND category_id = ?', [subcategory_id, category_id]);
+    if (subs.length === 0) return res.status(404).json({ success: false, message: 'Parent subcategory not found for the given category' });
+    const [dupe] = await pool.query('SELECT * FROM sub_subcategory WHERE LOWER(sub_subcategory_name) = LOWER(?) AND subcategory_id = ? AND category_id = ? AND id != ?', [sub_subcategory_name.trim(), subcategory_id, category_id, id]);
+    if (dupe.length > 0) return res.status(409).json({ success: false, message: 'Sub-subcategory name already used in this subcategory' });
+    await pool.query('UPDATE sub_subcategory SET sub_subcategory_name = ?, category_id = ?, subcategory_id = ? WHERE id = ?', [sub_subcategory_name.trim(), category_id, subcategory_id, id]);
+    res.json({ success: true, message: 'Sub-subcategory updated' });
+  } catch (err) {
+    console.error('Error updating sub-subcategory:', err);
+    res.status(500).json({ success: false, message: 'Error updating sub-subcategory' });
+  }
+});
+
+// Delete a sub-subcategory (admin only)
+router.delete('/sub-subcategories/:id', authenticateAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [existing] = await pool.query('SELECT * FROM sub_subcategory WHERE id = ?', [id]);
+    if (existing.length === 0) return res.status(404).json({ success: false, message: 'Sub-subcategory not found' });
+    // Optionally set products' sub_subcategory_id to NULL if you track it; skipping here since products don't have that column
+    await pool.query('DELETE FROM sub_subcategory WHERE id = ?', [id]);
+    res.json({ success: true, message: 'Sub-subcategory deleted' });
+  } catch (err) {
+    console.error('Error deleting sub-subcategory:', err);
+    res.status(500).json({ success: false, message: 'Error deleting sub-subcategory' });
   }
 });
 

@@ -387,7 +387,7 @@ exports.getProductById = async (req, res) => {
   try {
     const {
       name, product_code, description, mrp, discount, price,
-      category_id, subcategory_id, stock_quantity,
+      category_id, subcategory_id, sub_subcategory_id, stock_quantity,
       age_range, gender,
       brand_name, is_new_arrival
     } = req.body;
@@ -413,7 +413,7 @@ exports.getProductById = async (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         name, product_code, description || "", mrp, discount, price, image_url,
-        category_id || null, subcategory_id || null, sub_subcategory_id || null,stock_quantity || 0,
+        category_id || null, subcategory_id || null, sub_subcategory_id || null, stock_quantity || 0,
         age_range || "", gender || "", brand_name || "", is_new_arrival ? 1 : 0
       ]
     );
@@ -3316,13 +3316,20 @@ exports.uploadProductsFromExcelV2 = async (req, res) => {
     return res.json({
       success: true,
       message: `✅ Processed ${totalRows} rows. New saved: ${inserted}, Updated: ${updated}, Rejected: ${rejectedRows}`,
+      totalRows,
       total: totalRows,
+      savedCount: inserted,
+      updatedCount: updated,
+      acceptedCount: inserted + updated,
+      rejectedCount: rejectedRows,
       inserted,
       updated,
       rejected: rejectedRows,
       insertedProducts,
       updatedProducts,
       unprocessedProducts,
+      acceptedRows: [...insertedProducts, ...updatedProducts],
+      rejectedRows: unprocessedProducts,
       reportFiles: {
         inserted: insertedFileExists ? '/api/upload-report/inserted' : null,
         updated: updatedFileExists ? '/api/upload-report/updated' : null,
