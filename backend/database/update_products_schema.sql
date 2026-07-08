@@ -9,6 +9,9 @@ ALTER TABLE products ADD COLUMN category_id INT NULL AFTER category;
 -- Add subcategory_id column (if not exists)
 ALTER TABLE products ADD COLUMN subcategory_id INT NULL AFTER category_id;
 
+-- Add sub_subcategory_id column (if not exists)
+ALTER TABLE products ADD COLUMN sub_subcategory_id INT NULL AFTER subcategory_id;
+
 -- Add gender column (if not exists)
 ALTER TABLE products ADD COLUMN gender VARCHAR(20) NULL AFTER age_range;
 
