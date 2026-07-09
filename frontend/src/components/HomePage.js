@@ -162,7 +162,8 @@ const SectionShell = ({ id, title, actionLabel, onAction, children, centeredTitl
     className={` scroll-mt-32 
     rounded-lg sm:rounded-xl lg:rounded-[20px] 
     border-2 
-    p-4 sm:p-5 
+    pt-2 pb-3 sm:pt-2.5 sm:pb-4 
+    px-4 sm:px-5 
     shadow-[0_12px_30px_rgba(27,49,55,0.1)]
 
     xl:mx-[-30px]
@@ -172,7 +173,7 @@ const SectionShell = ({ id, title, actionLabel, onAction, children, centeredTitl
       tone === 'soft' ? 'border-[#d5dfd7] bg-[#fbfbf6]' : 'border-[#c7d9dc] bg-white'
     }`}
   >
-    <div className={`mb-5 flex flex-wrap items-end gap-3 border-b border-[#dfe7e9] pb-3 ${centeredTitle ? 'justify-center' : 'justify-between'}`}>
+    <div className={`mb-3 flex flex-wrap items-end gap-2 border-b border-[#dfe7e9] pb-2 ${centeredTitle ? 'justify-center' : 'justify-between'}`}>
       <h2
         className={`relative pl-4 text-[1.05rem] font-extrabold tracking-tight text-[#1b3137] sm:text-[1.85rem] ${
           centeredTitle ? 'text-center pl-0 before:hidden' : ''
@@ -323,7 +324,7 @@ const HomePage = () => {
     <div className="flex min-h-screen flex-col bg-[#f8f5ee] text-[#1b3137] overflow-x-hidden">
       <Header />
 
-     <main className="flex-1 py-5 lg:py-7 space-y-10 px-3 sm:px-4 lg:px-6 xl:px-10 2xl:px-20 [@media(min-width:2560px)]:px-32">
+     <main className="flex-1 py-2.5 lg:py-3 space-y-3 px-3 sm:px-4 lg:px-6 xl:px-10 2xl:px-20 [@media(min-width:2560px)]:px-32">
       <div className="
   mx-auto w-full 
   max-w-[1400px]

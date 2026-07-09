@@ -34,6 +34,7 @@ const Header = () => {
   const [mobileSubSubcategories, setMobileSubSubcategories] = useState([]);
   const [loadingMobileSubSubcategories, setLoadingMobileSubSubcategories] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [headerHeight, setHeaderHeight] = useState(0);
   const headerRef = useRef(null);
   const typingTimer = useRef(null);
   const dropdownCloseTimer = useRef(null);
@@ -57,6 +58,26 @@ useEffect(() => {
   window.addEventListener("resize", handleResize);
   return () => window.removeEventListener("resize", handleResize);
 }, []);
+
+useEffect(() => {
+  if (!headerRef.current) return undefined;
+
+  const updateHeight = () => {
+    const rect = headerRef.current?.getBoundingClientRect();
+    setHeaderHeight(rect?.height || 0);
+  };
+
+  updateHeight();
+  const resizeObserver = new ResizeObserver(() => updateHeight());
+  resizeObserver.observe(headerRef.current);
+
+  window.addEventListener('resize', updateHeight);
+
+  return () => {
+    resizeObserver.disconnect();
+    window.removeEventListener('resize', updateHeight);
+  };
+}, [headerRef]);
   const syncUserFromStorage = () => {
     const storedUser = localStorage.getItem('user');
     if (storedUser && storedUser !== 'undefined') {
@@ -388,8 +409,9 @@ useEffect(() => {
   console.log("Categories:", categories.length);
   console.log("Brands:", brands.length);
   return (
-    <header ref={headerRef} className="fixed top-0 z-[1200] w-full">
-      <div className="relative z-[1001] bg-[#2e79e3] px-3 py-2 text-[#fff7eb] sm:px-4">
+    <>
+      <header ref={headerRef} className="fixed top-0 z-[1200] w-full">
+        <div className="relative z-[1001] bg-[#2e79e3] px-3 py-2 text-[#fff7eb] sm:px-4">
         <div className="flex items-center justify-between gap-2">
           <div className="flex-shrink-0 text-sm font-semibold sm:text-base">📞 +91 70750 04435</div>
 
@@ -887,6 +909,9 @@ useEffect(() => {
         </div>
       )}
     </header>
+
+      <div aria-hidden="true" style={{ height: headerHeight }} className="w-full flex-shrink-0" />
+    </>
   );
 };
 

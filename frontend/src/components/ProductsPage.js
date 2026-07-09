@@ -778,7 +778,7 @@ const ProductsPage = () => {
   return (
     <div className="flex min-h-screen flex-col bg-[#f8f5ee] text-[#1b3137]">
       <Header />
-      <main className="mx-auto w-full max-w-[1440px] flex-1 px-3 py-4 md:px-5 md:py-6">
+      <main className="mx-auto w-full max-w-[1440px] flex-1 px-3 pt-2 pb-4 md:px-5 md:pt-3 md:pb-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
           {/* Sidebar Filters */}
           <aside className="hidden h-fit rounded-2xl border border-[#d8e5e7] bg-[#eaf2f3 ] p-4 shadow-[0_8px_24px_rgba(27,49,55,0.08)] lg:sticky lg:top-32 lg:block lg:w-[270px]">
@@ -787,7 +787,7 @@ const ProductsPage = () => {
 
           {/* Products Section */}
           <section className="min-h-[600px] flex-1">
-            <div className="sticky top-32 z-50 mb-8 rounded-2xl border border-[#d8e5e7] bg-white px-4 py-4 shadow-[0_8px_24px_rgba(27,49,55,0.06)] sm:px-5">
+            <div className="sticky top-32 z-50 mb-4 rounded-2xl border border-[#d8e5e7] bg-white px-4 py-4 shadow-[0_8px_24px_rgba(27,49,55,0.06)] sm:px-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h2 className="text-2xl font-extrabold tracking-tight text-[#1b3137] sm:text-3xl">
                   {pageTitle}
@@ -853,7 +853,7 @@ const ProductsPage = () => {
                 <p>No products found.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-3 pt-28 sm:gap-4 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                 {sortedProducts.map((product) => (
                   <div
                     key={product.id}
