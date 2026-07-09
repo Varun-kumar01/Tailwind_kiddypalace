@@ -250,8 +250,11 @@ router.get('/categories/:categoryId/subcategories/:subcategoryId/sub-subcategori
   
 
 
-//get products by character or themes (MUST be before /products/:id)
+// 🎭 Get all products by character or themes (MUST be before /products/:id)
 router.get("/products/by-tag/:tagId", productController.getProductsByTag);
+
+// ✅ Get products by brand name
+router.get('/products/by-brand/:brandName', productController.getProductsByBrand);
 
 // Add new product with one or more images (accept any image field name)
 router.post('/products', upload.any(), productController.addProduct);

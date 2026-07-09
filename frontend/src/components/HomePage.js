@@ -401,7 +401,7 @@ lg:justify-between
   key={age.age}
   data-scroll-card="true"
   type="button"
-  onClick={() => navigate(`/products?age=${age.age}`)}
+  onClick={() => navigate(`/products?age=${encodeURIComponent(age.age)}`)}
   className={`min-w-[160px] sm:min-w-[180px] lg:min-w-[200px] xl:min-w-[220px]
 flex-shrink-0 snap-start rounded-3xl border-2 border-[#ccdfe2] ${age.bgClass} p-2.5 text-left shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md`}
 >
@@ -451,7 +451,7 @@ flex-shrink-0 snap-start rounded-3xl border-2 border-[#ccdfe2] ${age.bgClass} p-
                   key={category.sno}
                   data-scroll-card="true"
                   type="button"
-                  onClick={() => navigate(`/products/by-category/${category.sno}`)}
+                  onClick={() => navigate(`/products/by-category/${encodeURIComponent(category.sno)}`)}
                   className="min-w-[176px] sm:min-w-[200px] lg:min-w-[220px] snap-start rounded-3xl border-2 border-[#ccdfe2] bg-white p-2.5 text-left shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md"
                 >
                   <img
@@ -525,7 +525,7 @@ flex-shrink-0 snap-start rounded-3xl border-2 border-[#ccdfe2] ${age.bgClass} p-
                   key={brand.id}
                   data-scroll-card="true"
                   type="button"
-                  onClick={() => navigate(`/products?brand=${brand.name}`)}
+                  onClick={() => navigate(`/products?brand=${encodeURIComponent(brand.name)}`)}
                   className="min-w-[158px] snap-start rounded-lg sm:rounded-lg lg:rounded-2xl border-2 border-[#ccdfe2] bg-white p-3 text-center shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md"
                 >
                   <img

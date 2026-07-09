@@ -115,6 +115,42 @@ exports.getProductsWithTags = async (req, res) => {
   }
 };
 
+exports.getProductsByBrand = async (req, res) => {
+  try {
+    const { brandName } = req.params;
+    const normalizedBrand = String(decodeURIComponent(brandName)).trim();
+
+    const [products] = await db.query(
+      `SELECT * FROM products WHERE LOWER(brand_name) = LOWER(?) ORDER BY created_at DESC`,
+      [normalizedBrand]
+    );
+
+    const productsWithImages = await Promise.all(
+      products.map(async (product) => {
+        let image_url = product.image_url;
+        if (!image_url) {
+          const [[firstImage]] = await db.query(
+            `SELECT image_url FROM product_images WHERE product_id = ? ORDER BY sort_order ASC LIMIT 1`,
+            [product.id]
+          );
+          image_url = firstImage?.image_url || null;
+        }
+
+        return {
+          ...product,
+          image_url,
+          discount_percent: Number(product.discount) || 0
+        };
+      })
+    );
+
+    res.status(200).json({ success: true, products: productsWithImages });
+  } catch (error) {
+    console.error('Get products by brand error:', error);
+    res.status(500).json({ message: 'Server error while fetching products by brand' });
+  }
+};
+
 // ======================================================
 // 🔐 ADMIN: UPLOAD PRODUCT IMAGES (USED BY + BUTTON)
 // ======================================================

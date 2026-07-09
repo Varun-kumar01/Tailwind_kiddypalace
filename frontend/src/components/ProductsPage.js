@@ -57,20 +57,19 @@ const ProductsPage = () => {
 
   // 🔹 Extract URL query parameters
   const searchParams = new URLSearchParams(location.search);
-  const { categoryId, subcategory: subcategoryParam } = useParams();
-  const { subSubcategoryId: subSubcategoryIdParam } = useParams();
+  const { categoryId, subcategory: subcategoryParam, subSubcategoryId: subSubcategoryIdParam } = useParams();
   const subcategory = subcategoryParam?.toLowerCase() || '';
-  const searchTerm = searchParams.get('search')?.toLowerCase() || '';
-  const tagId = searchParams.get('tag') || '';
-  const age = searchParams.get('age') || '';
-  const category = searchParams.get('category') || '';
-  const brand = searchParams.get('brand') || '';
-  const price = searchParams.get('price') || '';
+  const searchTerm = searchParams.get('search') ? decodeURIComponent(searchParams.get('search')).toLowerCase().trim() : '';
+  const tagId = searchParams.get('tag') ? decodeURIComponent(searchParams.get('tag')).trim() : '';
+  const age = searchParams.get('age') ? decodeURIComponent(searchParams.get('age')).trim() : '';
+  const category = searchParams.get('category') ? decodeURIComponent(searchParams.get('category')).trim() : '';
+  const brand = searchParams.get('brand') ? decodeURIComponent(searchParams.get('brand')).trim() : '';
+  const price = searchParams.get('price') ? decodeURIComponent(searchParams.get('price')).trim() : '';
   const isNewArrivalsPage = searchParams.get("new") === "true";
   const discount = searchParams.get("discount") || "";
   const hasTag = searchParams.get("hasTag") === "true";
-  const subSubcategoryId = searchParams.get('subSubcategoryId') || '';
-  const subSubcategoryName = searchParams.get('name') || '';
+  const subSubcategoryId = searchParams.get('subSubcategoryId') ? decodeURIComponent(searchParams.get('subSubcategoryId')).trim() : '';
+  const subSubcategoryName = searchParams.get('name') ? decodeURIComponent(searchParams.get('name')).trim() : '';
 
 
   useEffect(() => {
@@ -336,7 +335,7 @@ const ProductsPage = () => {
         return;
       }
 
-      // 📦 Default / category / subcategory / discount
+      // 📦 Default / category / subcategory / brand / discount
       let url = `${API_BASE_URL}/api/products${cacheBuster}`;
 
       if (discount === "high") {
@@ -351,6 +350,8 @@ const ProductsPage = () => {
           const found = (Array.isArray(catData) ? catData : []).find(c => String(c.sno) === String(categoryId));
           if (found) setCategoryName(found.category_name);
         } catch (e) {}
+      } else if (brand) {
+        url = `${API_BASE_URL}/api/products/by-brand/${encodeURIComponent(brand)}${cacheBuster}`;
       }
 
       const res = await fetch(url);
@@ -506,7 +507,7 @@ const ProductsPage = () => {
 
   const selectedAgeRangeURL = age ? parseAgeToMonths(age) : null;
   const selectedPriceRangeURL = price ? parsePriceRange(price) : null;
-  const selectedBrandURL = brand ? brand.toLowerCase() : '';
+  const selectedBrandURL = brand ? brand.toLowerCase().trim() : '';
 
   const selectedAgeRangeLocal =
     filters.ageRange !== 'all'
@@ -602,12 +603,12 @@ const ProductsPage = () => {
 
     // 🏷 Brand filter (URL)
     if (ok && selectedBrandURL) {
-      ok = ok && (p.brand_name || "").toLowerCase() === selectedBrandURL;
+      ok = ok && (p.brand_name || "").toLowerCase().trim() === selectedBrandURL;
     }
 
     // 🏷 Brand filter (sidebar)
     if (ok && selectedBrandLocal) {
-      ok = ok && p.brand_name?.toLowerCase() === selectedBrandLocal;
+      ok = ok && (p.brand_name || "").toLowerCase().trim() === selectedBrandLocal;
     }
 
     // � Price filter (URL)
@@ -643,6 +644,14 @@ const ProductsPage = () => {
     return 0;
   });
 
+  const capitalize = (text = '') => {
+    if (!text) return '';
+    return text
+      .split(' ')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
   const pageTitle = discount === 'high'
     ? 'Special Offers'
     : searchParams.get('customized') === 'true'
@@ -651,15 +660,17 @@ const ProductsPage = () => {
         ? 'Fresh In Store'
         : hasTag || tagId
           ? 'Characters & Themes'
-          : age
-            ? `Products for ${age}`
-            : subcategory
-              ? subcategory.toUpperCase()
-              : location.pathname.includes('/by-sub-subcategory/')
-                ? (subSubcategoryName || 'Products')
-              : categoryId
-              ? (categoryName || 'Category Products')
-                : 'All Products';
+          : brand
+            ? `Brand: ${capitalize(brand)}`
+            : age
+              ? `Products for ${age}`
+              : subcategory
+                ? subcategory.toUpperCase()
+                : location.pathname.includes('/by-sub-subcategory/')
+                  ? (subSubcategoryName || 'Products')
+                : categoryId
+                  ? (categoryName || 'Category Products')
+                  : 'All Products';
 
   const clearAllFilters = () => {
     setFilters({ priceRange: 'all', ageRange: 'all', brand: 'all' });

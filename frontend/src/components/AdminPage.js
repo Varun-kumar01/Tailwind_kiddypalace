@@ -1915,7 +1915,7 @@ const handleCancelOrder = (orderId) => {
         // ignore
       }
 
-      navigate('/', { replace: true });
+      window.location.replace('/');
     }
   };
 

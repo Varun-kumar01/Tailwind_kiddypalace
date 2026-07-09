@@ -286,6 +286,8 @@ useEffect(() => {
 
     setToast({ show: true, message: 'Logged out successfully!' });
     setTimeout(() => setToast({ show: false, message: '' }), 1200);
+
+    navigate('/', { replace: true });
   };
 
   const handleMouseEnter = async (categoryId) => {
