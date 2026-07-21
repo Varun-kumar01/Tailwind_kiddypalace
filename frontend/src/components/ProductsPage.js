@@ -20,6 +20,7 @@ const ProductsPage = () => {
   const [cartQuantities, setCartQuantities] = useState({});
   const productRefs = useRef({});
   const [categoryName, setCategoryName] = useState('');
+  const [tagName, setTagName] = useState('');
 
   // 🔹 New state for sorting
   const [sortOrder, setSortOrder] = useState('none');
@@ -85,6 +86,30 @@ const ProductsPage = () => {
       setTimeout(() => setHighlightedProduct(null), 2500);
     }
   }, [location.search, location.pathname, subcategory, categoryId]);
+
+  // When a specific tag is present in the query, fetch tag list and resolve its name
+  useEffect(() => {
+    const loadTagName = async () => {
+      if (!tagId) {
+        setTagName('');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/tags?t=${Date.now()}`);
+        const data = await res.json();
+        const tags = data && data.tags ? data.tags : Array.isArray(data) ? data : [];
+        const found = (Array.isArray(tags) ? tags : []).find((t) => String(t.id) === String(tagId));
+        if (found) setTagName(found.name || '');
+        else setTagName('');
+      } catch (e) {
+        console.error('Error loading tag name:', e);
+        setTagName('');
+      }
+    };
+
+    loadTagName();
+  }, [tagId]);
 
   // Sync cart quantities whenever cartItems changes
   useEffect(() => {
@@ -638,8 +663,10 @@ const ProductsPage = () => {
       ? 'Customized Products'
       : isNewArrivalsPage
         ? 'Fresh In Store'
-        : hasTag || tagId
-          ? 'Characters & Themes'
+        : tagId
+          ? (tagName ? tagName.toUpperCase() : 'Characters & Themes')
+          : hasTag
+            ? 'Characters & Themes'
           : age
             ? `Products for ${age}`
             : subcategory

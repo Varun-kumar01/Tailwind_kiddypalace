@@ -1,4 +1,4 @@
-
+const { sendOrderConfirmationEmail } = require("../helpers/emailHelper");
 const xlsx = require("xlsx");
 const fs = require("fs");
 const path = require('path');
@@ -3923,8 +3923,22 @@ exports.createOrder = async (req, res) => {
     }
 
     await connection.beginTransaction();
+    // Get logged-in user's email
+    const [[user]] = await connection.query(
+        "SELECT email FROM users WHERE id = ?",
+        [userId]
+    );
 
-    const orderNumber = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    if (!user) {
+        throw new Error("User not found");
+    }
+
+    const customerEmail = user.email;
+
+    console.log("✅ Customer Email from DB:", customerEmail);
+    
+
+        const orderNumber = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     const subtotal = items.reduce((sum, item) => sum + (Number(item.price) * (Number(item.quantity) || 1)), 0);
 
     const [orderResult] = await connection.query(
@@ -3981,6 +3995,16 @@ exports.createOrder = async (req, res) => {
 
     await connection.commit();
 
+    await sendOrderConfirmationEmail({
+    customerName: shippingAddress.fullName,
+    customerEmail: customerEmail,
+    orderNumber,
+    items,
+    totalAmount,
+    paymentMethod,
+    shippingAddress
+});
+
     res.status(201).json({
       success: true,
       message: 'Order placed successfully',
@@ -3997,5 +4021,3 @@ exports.createOrder = async (req, res) => {
   }
 };
 const db = require('../config/db');
-
-

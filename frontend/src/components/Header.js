@@ -404,7 +404,7 @@ useEffect(() => {
             <a href="https://www.instagram.com/kdp_hyd/" target="_blank" rel="noopener noreferrer" className="inline-flex h-7 w-7 items-center justify-center rounded-full text-white transition hover:bg-white/15 sm:h-8 sm:w-8">
               <i className="fab fa-instagram" />
             </a>
-            <a href="https://kiddypalace.in/" target="_blank" rel="noopener noreferrer" className="inline-flex h-7 w-7 items-center justify-center rounded-full text-white transition hover:bg-white/15 sm:h-8 sm:w-8">
+            <a href="https://www.facebook.com/share/1Ar5nE9buw/" target="_blank" rel="noopener noreferrer" className="inline-flex h-7 w-7 items-center justify-center rounded-full text-white transition hover:bg-white/15 sm:h-8 sm:w-8">
               <i className="fab fa-facebook-f" />
             </a>
 
