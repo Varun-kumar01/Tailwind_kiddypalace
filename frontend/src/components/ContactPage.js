@@ -50,25 +50,26 @@ const ContactPage = () => {
               <div className="rounded-2xl border border-[#ede6d9] bg-white/95 p-6 shadow-[0_10px_30px_rgba(39,60,46,0.16)] transition hover:-translate-y-1">
                 <div className="mb-3 text-4xl">📍</div>
                 <h3 className="mb-2 text-xl font-bold text-[#2e79e3]">Address</h3>
-                <p className="text-sm leading-7 text-[#666]">123 E-Commerce Street<br />Business District<br />Mumbai, India 400001</p>
+                <p className="text-sm leading-7 text-[#666]"> Plot No-96, Muppas Rd, opp. Rajapushpa Provincia<br /> Narsingi, Hyderabad<br />Telangana 500089</p>
               </div>
 
               <div className="rounded-2xl border border-[#ede6d9] bg-white/95 p-6 shadow-[0_10px_30px_rgba(39,60,46,0.16)] transition hover:-translate-y-1">
                 <div className="mb-3 text-4xl">📞</div>
                 <h3 className="mb-2 text-xl font-bold text-[#2e79e3]">Phone</h3>
-                <p className="text-sm leading-7 text-[#666]">+91 98765 43210<br />+91 98765 43211</p>
+                <p className="text-sm leading-7 text-[#666]">+91 7075004435</p>
               </div>
 
               <div className="rounded-2xl border border-[#ede6d9] bg-white/95 p-6 shadow-[0_10px_30px_rgba(39,60,46,0.16)] transition hover:-translate-y-1">
                 <div className="mb-3 text-4xl">✉️</div>
                 <h3 className="mb-2 text-xl font-bold text-[#2e79e3]">Email</h3>
-                <p className="text-sm leading-7 text-[#666]">support@ecommerce.com<br />sales@ecommerce.com</p>
+                <p className="text-sm leading-7 text-[#666]">kiddypalace.ind@gmail.com</p>
               </div>
 
               <div className="rounded-2xl border border-[#ede6d9] bg-white/95 p-6 shadow-[0_10px_30px_rgba(39,60,46,0.16)] transition hover:-translate-y-1">
                 <div className="mb-3 text-4xl">🕒</div>
                 <h3 className="mb-2 text-xl font-bold text-[#2e79e3]">Working Hours</h3>
-                <p className="text-sm leading-7 text-[#666]">Monday - Friday: 9:00 AM - 6:00 PM<br />Saturday: 10:00 AM - 4:00 PM<br />Sunday: Closed</p>
+                <p className="text-sm leading-7 text-[#666]">Sunday-Saturday: 8:00 AM - 10:00 PM</ 
+                p>
               </div>
             </div>
 

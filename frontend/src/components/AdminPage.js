@@ -14,7 +14,7 @@ const getAdminHeaders = () => {
     Authorization: `Bearer ${token}`,
   };
 };
-
+ 
 
 
 const AdminPage = () => {

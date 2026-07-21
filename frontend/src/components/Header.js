@@ -450,7 +450,7 @@ useEffect(() => {
                 </a>
                 <a href="https://www.google.com/maps/place/Kiddy+Palace/@17.4027056,78.350412,17z/data=!3m1!4b1!4m6!3m5!1s0x3bcb950f7b8fd4ff:0xe2696e6650b03b81!8m2!3d17.4027056!4d78.350412!16s%2Fg%2F11vyvxg_b4!18m1!1e1?entry=ttu&g_ep=EgoyMDI2MDQwNy4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-3 rounded-xl px-3 py-2 text-[#273c2e] transition hover:bg-[#fff7eb]">
                   <span className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-full bg-[#f4f7f5] text-[#2e79e3]"><MapPin size={20} /></span>
-                  <span className="text-sm font-medium leading-5">Nanakramguda - 92912 55974</span>
+                  <span className="text-sm font-medium leading-5 whitespace-nowrap">Nanakramguda - 92912 55974</span>
                 </a>
                 <a href="https://maps.app.goo.gl/F2n5Bmf44XNTkgTG9" target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-3 rounded-xl px-3 py-2 text-[#273c2e] transition hover:bg-[#fff7eb]">
                   <span className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-full bg-[#f4f7f5] text-[#2e79e3]"><MapPin size={20} /></span>

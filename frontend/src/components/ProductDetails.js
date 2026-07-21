@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
+
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useLocation, useNavigate, useParams,  } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import Header from './Header';
@@ -442,7 +443,7 @@ const handleClearMainImage = async () => {
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-white via-emerald-50/40 to-slate-50 text-slate-900">
       <Header />
 
-      <main className="px-4 py-8 sm:px-6 lg:px-8 lg:py-10 mt-80">
+      <main className="px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 rounded-[28px] border border-emerald-100 bg-white/90 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur sm:p-6 lg:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:gap-8 w-full">
       <section className="flex flex-col lg:flex-row gap-4 w-full lg:w-auto lg:flex-1">

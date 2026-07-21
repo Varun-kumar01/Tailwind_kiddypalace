@@ -790,12 +790,11 @@ exports.importProducts = async (req, res) => {
             (name, product_code, description, mrp, discount, price, image_url,
              category_id, subcategory_id, sub_subcategory_id,stock_quantity, age_range, gender,
              brand_name, is_new_arrival)
-            // VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-              String(product.name).trim(), pcode, product.description || '', product.mrp || null, product.discount || null,
-              price, null,
-              product.category_id || null, product.subcategory_id || null, stock,
-              product.age_range || '', product.gender || '', product.brand_name || '', product.is_new_arrival ? 1 : 0
+              String(product.name).trim(),pcode,product.description || '',product.mrp || null,product.discount || null,price,null,
+              product.category_id || null,product.subcategory_id || null,product.sub_subcategory_id || null,stock, product.gender || '',
+              product.brand_name || '',product.is_new_arrival ? 1 : 0
             ]
           );
           accepted.push({ name: product.name, product_code: pcode, status: 'Saved' });
@@ -2974,15 +2973,9 @@ exports.uploadProductsFromExcelV2 = async (req, res) => {
 
         if (subcategory_id !== null && !Number.isNaN(subcategory_id)) {
           try {
-            let found = false;
-            const [r] = await db.query("SELECT id FROM subcategory WHERE id = ? LIMIT 1", [subcategory_id]);
-            if (Array.isArray(r) && r.length > 0) {
-              found = true;
-            } else {
-              const [r2] = await db.query("SELECT sno FROM subcategory WHERE sno = ? LIMIT 1", [subcategory_id]);
-              if (Array.isArray(r2) && r2.length > 0) found = true;
-            }
-            if (!found) subcategory_id = null;
+            const [r] = await db.query("SELECT sno FROM subcategory WHERE sno = ? LIMIT 1", [subcategory_id]);
+            console.log('Subcategory query result:', r);
+            if (!Array.isArray(r) ||r.length === 0) subcategory_id = null;
           } catch (e) {
             subcategory_id = null;
           }

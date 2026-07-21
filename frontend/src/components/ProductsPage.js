@@ -288,7 +288,7 @@ const ProductsPage = () => {
       const cacheBuster = `?t=${Date.now()}`;
       // Sub-subcategory page
       if (location.pathname.includes('/by-sub-subcategory/')) {
-        const id = location.pathname.split('/by-sub-subcategory/')[1];
+        const id = location.pathname.split('/by-sub-subcategory/')[1]?.split('?')[0];
         const res = await fetch(`${API_BASE_URL}/api/products/by-sub-subcategory/${id}${cacheBuster}`);
         const data = await res.json();
         setProducts(data.products || []);
@@ -639,8 +639,16 @@ const ProductsPage = () => {
 
   // 🔹 Apply sorting to filtered products
   const sortedProducts = [...filteredProducts].sort((a, b) => {
-    if (sortOrder === 'lowToHigh') return a.price - b.price;
-    if (sortOrder === 'highToLow') return b.price - a.price;
+    const ageFilterActive = filters.ageRange !== "all" || !!age;
+    if (ageFilterActive) {
+      const aHasAge = !!a.age_range && a.age_range.trim() !== '';
+      const bHasAge = !!b.age_range && b.age_range.trim() !== '';
+
+      if (aHasAge && !bHasAge) return -1;
+      if (!aHasAge && bHasAge) return 1;
+    }
+    if (sortOrder === "lowToHigh") return Number(a.price) - Number(b.price);
+    if (sortOrder === "highToLow") return Number(b.price) - Number(a.price);
     return 0;
   });
 
