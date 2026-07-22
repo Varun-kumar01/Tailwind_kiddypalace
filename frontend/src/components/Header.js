@@ -139,7 +139,9 @@ useEffect(() => {
     const fetchCategories = () => {
       fetch(`${API_BASE_URL}/api/categories`)
         .then((response) => response.json())
-        .then((data) => setCategories(Array.isArray(data) ? data : []))
+        .then((data) => {console.log("CATEGORIES DATA:", data);setCategories(Array.isArray(data) ? data : []);
+          
+        })
         .catch((error) => console.error('Error fetching categories:', error));
     };
 

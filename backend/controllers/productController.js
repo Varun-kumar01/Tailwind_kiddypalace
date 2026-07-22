@@ -761,7 +761,7 @@ exports.importProducts = async (req, res) => {
               [
                 uploadedDisplay, product.description || '', product.mrp || null, product.discount || null,
                 price, null, product.category_id || null, product.subcategory_id || null, stock,
-                product.age_range || '', product.gender || '', product.brand_name || '', product.is_new_arrival ? 1 : 0,
+                product.age_range === '0' || product.age_range === '0 Years' || product.age_range === 'All' || '', product.gender || '', product.brand_name || '', product.is_new_arrival ? 1 : 0,
                 dbCode
               ]
             );

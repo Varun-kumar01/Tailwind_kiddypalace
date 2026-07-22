@@ -71,6 +71,7 @@ const ProductsPage = () => {
   const hasTag = searchParams.get("hasTag") === "true";
   const subSubcategoryId = searchParams.get('subSubcategoryId') ? decodeURIComponent(searchParams.get('subSubcategoryId')).trim() : '';
   const subSubcategoryName = searchParams.get('name') ? decodeURIComponent(searchParams.get('name')).trim() : '';
+  console.log("Sub Subcategory Name:", subSubcategoryName);
 
 
   useEffect(() => {
@@ -691,17 +692,19 @@ const ProductsPage = () => {
       ? 'Customized Products'
       : isNewArrivalsPage
         ? 'Fresh In Store'
-        : tagId
-          ? (tagName ? tagName.toUpperCase() : 'Characters & Themes')
-          : hasTag
-            ? 'Characters & Themes'
-          : age
+        : hasTag || tagId
+          ? 'Characters & Themes'
+          : brand
+            ? `Brand: ${capitalize(brand)}`
+            : age
             ? `Products for ${age}`
-            : subcategory
-              ? subcategory.toUpperCase()
-              : categoryId
-              ? (categoryName || 'Category Products')
-                : 'All Products';
+            : location.pathname.includes('/by-sub-subcategory/')
+              ? (subSubcategoryName || 'products')
+              : subcategory
+                ? subcategory.toUpperCase()
+                : categoryId
+                  ? (categoryName || 'Category Products')
+                  : 'All Products';
 
   const clearAllFilters = () => {
     setFilters({ priceRange: 'all', ageRange: 'all', brand: 'all' });
@@ -1004,7 +1007,9 @@ const ProductsPage = () => {
                           <p className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${product.stock_quantity > 0 ? 'bg-[#e8f1ff] text-[#2e79e3]' : 'bg-rose-50 text-rose-700'}`}>
                             {product.stock_quantity > 0 ? 'In Stock' : 'Out of Stock'}
                           </p>
-                          {product.age_range && (
+                          {product.age_range &&
+                           product.age_range.trim() !== "0" &&
+                           product.age_range.trim() !== "0 Years" && (
                             <p className="inline-flex rounded-full px-3 py-1 text-xs font-semibold bg-[#fef3c7] text-[#b45309]">
                               {product.age_range}
                             </p>
