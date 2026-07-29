@@ -48,7 +48,7 @@ const categorySubcategories = [
   },
   {
     category: 'Files & Folders',
-    subcategories: ['File Folders', 'Expanding Files', 'Document Wallets', 'Label Tabs', 'Arch Files'],
+    subcategories: ['File Folders', 'Expanding Files', 'Document Wallets', 'Label Tabs', 'Arch Files' ],
   },
 ];
 

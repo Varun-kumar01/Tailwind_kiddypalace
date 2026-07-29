@@ -602,12 +602,14 @@ const ProductsPage = () => {
   //   return ok;
   // });
 
+
   const filteredProducts = products.filter((p) => {
     // ✅ VERY IMPORTANT:
     // If coming from Characters/Tag page, DO NOT apply brand/price/age filters
     if (tagId) return true;
 
     let ok = true;
+    const productAge = (p.age_range || "").trim();
 
     // 🔍 Search filter
     if (searchTerm) {
@@ -617,15 +619,35 @@ const ProductsPage = () => {
 
     // 🎂 Age filter (URL)
     const prodRange = parseAgeToMonths(p.age_range || "");
-    if (selectedAgeRangeURL && prodRange) {
-      ok = ok && rangesOverlap(prodRange, selectedAgeRangeURL);
+    if (ok && age) {
+      if (productAge !== "" && productAge !== age) {
+        ok = false;
+      }
+    }
+    if (ok && filters.ageRange !== "all") {
+      const ageMap = {
+        "0-18-months": "0-18 Months",
+        "18-36-months": "18-36 Months",
+        "3-5-years": "3-5 Years",
+        "5-7-years": "5-7 Years",
+        "7-9-years": "7-9 Years",
+        "9-12-years": "9-12 Years",
+        "12+": "12+ Years",
+      };
+
+      const selectedAge = ageMap[filters.ageRange];
+
+      if (productAge !== "" && productAge !== selectedAge) {
+        ok = false;
+      }
     }
 
+
     // 🎂 Age filter (sidebar)
-    if (ok && selectedAgeRangeLocal) {
-      const prodRangeLocal = parseAgeToMonths(p.age_range || "");
-      ok = ok && rangesOverlap(prodRangeLocal, selectedAgeRangeLocal);
-    }
+    // 🎂 Age filter (sidebar)
+    
+
+ 
 
     // 🏷 Brand filter (URL)
     if (ok && selectedBrandURL) {
@@ -665,18 +687,29 @@ const ProductsPage = () => {
 
   // 🔹 Apply sorting to filtered products
   const sortedProducts = [...filteredProducts].sort((a, b) => {
-    const ageFilterActive = filters.ageRange !== "all" || !!age;
-    if (ageFilterActive) {
-      const aHasAge = !!a.age_range && a.age_range.trim() !== '';
-      const bHasAge = !!b.age_range && b.age_range.trim() !== '';
+  const ageFilterActive = filters.ageRange !== "all" || !!age;
+  
+  console.log('ageFilterActive:', ageFilterActive, 'filters.ageRange:', filters.ageRange, 'age:', age);
+  console.log('Product a:', a.name, 'age_range:', a.age_range);
+  console.log('Product b:', b.name, 'age_range:', b.age_range);
 
-      if (aHasAge && !bHasAge) return -1;
-      if (!aHasAge && bHasAge) return 1;
-    }
-    if (sortOrder === "lowToHigh") return Number(a.price) - Number(b.price);
-    if (sortOrder === "highToLow") return Number(b.price) - Number(a.price);
-    return 0;
-  });
+  if (ageFilterActive) {
+    const aHasAge = !!a.age_range && a.age_range.trim() !== '' && a.age_range.trim() !== '0';
+    const bHasAge = !!b.age_range && b.age_range.trim() !== '' && b.age_range.trim() !== '0';
+
+    if (aHasAge && !bHasAge) return -1;
+    if (!aHasAge && bHasAge) return 1;
+  }
+
+  if (sortOrder === "lowToHigh") return Number(a.price) - Number(b.price);
+  if (sortOrder === "highToLow") return Number(b.price) - Number(a.price);
+
+  return 0;
+});
+
+
+  
+
 
   const capitalize = (text = '') => {
     if (!text) return '';
@@ -1002,18 +1035,20 @@ const ProductsPage = () => {
                             </span>
                           )}
                         </div>
-
+                        {console.log(product.name, typeof product.age_range, JSON.stringify(product.age_range))}
                         <div className="mt-2 flex flex-wrap gap-2 items-center">
                           <p className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${product.stock_quantity > 0 ? 'bg-[#e8f1ff] text-[#2e79e3]' : 'bg-rose-50 text-rose-700'}`}>
                             {product.stock_quantity > 0 ? 'In Stock' : 'Out of Stock'}
                           </p>
                           {product.age_range &&
-                           product.age_range.trim() !== "0" &&
-                           product.age_range.trim() !== "0 Years" && (
-                            <p className="inline-flex rounded-full px-3 py-1 text-xs font-semibold bg-[#fef3c7] text-[#b45309]">
-                              {product.age_range}
+                          product.age_range !== 0 &&
+                          product.age_range !== "0" &&
+                          product.age_range !== "0 Years" && (
+                          <p className="inline-flex rounded-full px-3 py-1 text-xs font-semibold bg-[#fef3c7] text-[#b45309]">
+                            {product.age_range}
                             </p>
                           )}
+                          
                         </div>
 
                         <div className="mt-2.5 w-full h-[44px] flex items-center justify-center">

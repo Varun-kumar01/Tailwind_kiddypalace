@@ -963,11 +963,15 @@ const ProductsPage = () => {
                           <p className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${product.stock_quantity > 0 ? 'bg-[#e8f1ff] text-[#2e79e3]' : 'bg-rose-50 text-rose-700'}`}>
                             {product.stock_quantity > 0 ? 'In Stock' : 'Out of Stock'}
                           </p>
-                          {product.age_range && (
-                            <p className="inline-flex rounded-full px-3 py-1 text-xs font-semibold bg-[#fef3c7] text-[#b45309]">
-                              {product.age_range}
+                          {product.age_range &&
+                          !["0", "0 Years", "0 years", "", null].includes(
+                            String(product.age_range).trim()
+                          ) && (
+                          <p className="inline-flex rounded-full px-3 py-1 text-xs font-semibold bg-[#fef3c7] text-[#b45309]">
+                            {product.age_range}
                             </p>
                           )}
+                          
                         </div>
 
                         <div className="mt-2.5 w-full h-[44px] flex items-center justify-center">
