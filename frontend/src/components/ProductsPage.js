@@ -9,6 +9,8 @@ const ProductsPage = () => {
 
   const location = useLocation();
   const navigate = useNavigate();
+  const query = new URLSearchParams(location.search);
+  
   const { addToCart, cartItems, updateQuantity, removeFromCart } = useCart();
 
   const [products, setProducts] = useState([]);
@@ -692,8 +694,10 @@ const ProductsPage = () => {
       ? 'Customized Products'
       : isNewArrivalsPage
         ? 'Fresh In Store'
-        : hasTag || tagId
+        : hasTag
           ? 'Characters & Themes'
+          : tagId
+            ? (tagName || 'Characters & Themes')
           : brand
             ? `Brand: ${capitalize(brand)}`
             : age
