@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext';
 import Header from './Header';
 import Footer from './Footer';
 import { API_BASE_URL } from "./config";
+import { compareInStockFirst } from '../utils/productSorting';
 
 const TrendingProductsPage = () => {
   const navigate = useNavigate();
@@ -72,8 +73,10 @@ const TrendingProductsPage = () => {
 
   // Apply sorting
   const sortedProducts = [...products].sort((a, b) => {
-    if (sortOrder === 'lowToHigh') return a.price - b.price;
-    if (sortOrder === 'highToLow') return b.price - a.price;
+    const stockOrder = compareInStockFirst(a, b);
+    if (stockOrder !== 0) return stockOrder;
+    if (sortOrder === 'lowToHigh') return Number(a.price) - Number(b.price);
+    if (sortOrder === 'highToLow') return Number(b.price) - Number(a.price);
     return 0;
   });
 

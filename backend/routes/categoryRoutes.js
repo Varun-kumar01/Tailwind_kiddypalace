@@ -141,7 +141,7 @@ router.get('/products/by-subcategory/:subcategory', async (req, res) => {
 
     // ✅ Fetch products from 'products' table instead of 'subcategory_1'
     const [prodRows] = await pool.query(
-      'SELECT * FROM products WHERE subcategory_id = ?',
+      'SELECT * FROM products WHERE subcategory_id = ? ORDER BY (COALESCE(stock_quantity, 0) > 0) DESC, created_at DESC',
       [subcategoryId]
     );
 
@@ -189,7 +189,7 @@ router.get('/products/by-category/:categoryId', async (req, res) => {
 
     // Fetch products belonging to this category_id
     const [prodRows] = await pool.query(
-      'SELECT * FROM products WHERE category_id = ? ORDER BY created_at DESC',
+      'SELECT * FROM products WHERE category_id = ? ORDER BY (COALESCE(stock_quantity, 0) > 0) DESC, created_at DESC',
       [categoryId]
     );
 

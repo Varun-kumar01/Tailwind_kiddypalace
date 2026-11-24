@@ -9,7 +9,7 @@ exports.getAllProducts = async (req, res) => {
   try {
     const showAll = req.query.showAll === 'true';
 
-    const query = `SELECT * FROM products ORDER BY created_at DESC`;
+    const query = `SELECT * FROM products ORDER BY (COALESCE(stock_quantity, 0) > 0) DESC, created_at DESC`;
 
     const [products] = await db.query(query);
 
@@ -80,10 +80,12 @@ exports.exportProducts = async (req, res) => {
 exports.getProductsWithTags = async (req, res) => {
   try {
     const [products] = await db.query(
-      `SELECT DISTINCT p.*
+      `SELECT p.*
        FROM products p
-       INNER JOIN product_tags pt ON p.id = pt.product_id
-       ORDER BY p.created_at DESC`
+       WHERE EXISTS (
+         SELECT 1 FROM product_tags pt WHERE pt.product_id = p.id
+       )
+       ORDER BY (COALESCE(p.stock_quantity, 0) > 0) DESC, p.created_at DESC`
     );
 
     // If product has manually set image_url, use that. Otherwise fetch first image from product_images
@@ -121,7 +123,7 @@ exports.getProductsByBrand = async (req, res) => {
     const normalizedBrand = String(decodeURIComponent(brandName)).trim();
 
     const [products] = await db.query(
-      `SELECT * FROM products WHERE LOWER(brand_name) = LOWER(?) ORDER BY created_at DESC`,
+      `SELECT * FROM products WHERE LOWER(TRIM(brand_name)) = LOWER(TRIM(?)) ORDER BY (COALESCE(stock_quantity, 0) > 0) DESC, created_at DESC`,
       [normalizedBrand]
     );
 
@@ -2239,7 +2241,7 @@ exports.getProductsBySubcategory = async (req, res) => {
     }
 
     const [products] = await db.query(
-      `SELECT * FROM products WHERE subcategory_id = ? ORDER BY created_at DESC`,
+      `SELECT * FROM products WHERE subcategory_id = ? ORDER BY (COALESCE(stock_quantity, 0) > 0) DESC, created_at DESC`,
       [finalSubcategoryId]
     );
 
@@ -2297,7 +2299,7 @@ exports.getProductsByTag = async (req, res) => {
        FROM products p
        JOIN product_tags pt ON p.id = pt.product_id
        WHERE pt.tag_id = ?
-       ORDER BY p.created_at DESC`,
+       ORDER BY (COALESCE(p.stock_quantity, 0) > 0) DESC, p.created_at DESC`,
       [tagId]
     );
 
@@ -3529,7 +3531,7 @@ exports.getItemTracking = async (req, res) => {
 exports.getNewArrivals = async (req, res) => {
   try {
     const [products] = await db.query(
-      `SELECT * FROM products ORDER BY id DESC LIMIT 12`
+      `SELECT * FROM products ORDER BY (COALESCE(stock_quantity, 0) > 0) DESC, id DESC LIMIT 12`
     );
     
     // Add discount_percent field to each product
@@ -3583,7 +3585,7 @@ exports.getNewArrivals = async (req, res) => {
 exports.getHighDiscountProducts = async (req, res) => {
   try {
     const [products] = await db.query(
-      "SELECT * FROM products WHERE discount > 10 ORDER BY created_at DESC"
+      "SELECT * FROM products WHERE discount > 10 ORDER BY (COALESCE(stock_quantity, 0) > 0) DESC, created_at DESC"
     );
     
     // Add a normalized discount_percent field to each product
@@ -3606,7 +3608,7 @@ exports.getHighDiscountProducts = async (req, res) => {
 exports.getCustomizedProducts = async (req, res) => {
   try {
     const [products] = await db.query(
-      "SELECT * FROM products WHERE customized = 1 ORDER BY created_at DESC"
+      "SELECT * FROM products WHERE customized = 1 ORDER BY (COALESCE(stock_quantity, 0) > 0) DESC, created_at DESC"
     );
 
     // Add discount_percent field to each product
@@ -3988,7 +3990,7 @@ exports.getBestSellingProducts = async (req, res) => {
        LEFT JOIN order_items oi ON p.id = oi.product_id
        GROUP BY p.id
        HAVING total_sold > 4
-       ORDER BY total_sold DESC, p.created_at DESC
+       ORDER BY (COALESCE(p.stock_quantity, 0) > 0) DESC, total_sold DESC, p.created_at DESC
        LIMIT ?`,
       [parseInt(limit)]
     );

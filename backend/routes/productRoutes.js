@@ -192,7 +192,7 @@ router.get('/products/by-sub-subcategory/:subSubcategoryId', async (req, res) =>
     const db = require('../config/db');
     const { subSubcategoryId } = req.params;
     const [products] = await db.query(
-      `SELECT * FROM products WHERE sub_subcategory_id = ? ORDER BY created_at DESC`,
+      `SELECT * FROM products WHERE sub_subcategory_id = ? ORDER BY (COALESCE(stock_quantity, 0) > 0) DESC, created_at DESC`,
       [subSubcategoryId]
     );
     const productsWithImages = await Promise.all(

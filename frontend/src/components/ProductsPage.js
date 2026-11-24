@@ -4,12 +4,15 @@ import { useCart } from '../context/CartContext';
 import Header from './Header';
 import Footer from './Footer';
 import { API_BASE_URL } from "./config";
+import { compareInStockFirst } from '../utils/productSorting';
+import useBrandNames from '../hooks/useBrandNames';
 
 const ProductsPage = () => {
 
   const location = useLocation();
   const navigate = useNavigate();
   const { addToCart, cartItems, updateQuantity, removeFromCart } = useCart();
+  const brandNames = useBrandNames();
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -687,6 +690,9 @@ const ProductsPage = () => {
 
   // 🔹 Apply sorting to filtered products
   const sortedProducts = [...filteredProducts].sort((a, b) => {
+  const stockOrder = compareInStockFirst(a, b);
+  if (stockOrder !== 0) return stockOrder;
+
   const ageFilterActive = filters.ageRange !== "all" || !!age;
   
   console.log('ageFilterActive:', ageFilterActive, 'filters.ageRange:', filters.ageRange, 'age:', age);
@@ -764,6 +770,17 @@ const ProductsPage = () => {
     filters.brand !== 'all' ? { key: 'brand', label: `Brand: ${filters.brand}` } : null,
   ].filter(Boolean);
 
+  const selectedBrandName = brandNames.find(
+    (name) => name.toLowerCase() === filters.brand.toLowerCase()
+  );
+  const brandFilterOptions = brandNames.map((name) => ({
+    value: name === selectedBrandName ? filters.brand : name,
+    label: name,
+  }));
+  if (filters.brand !== 'all' && !selectedBrandName) {
+    brandFilterOptions.unshift({ value: filters.brand, label: filters.brand });
+  }
+
   const renderFilters = (isMobile = false) => (
     <div className={isMobile ? 'space-y-3' : ''}>
       <h3 className="mb-4 text-xl font-extrabold text-[#104f58]">Filter Toys</h3>
@@ -816,12 +833,9 @@ const ProductsPage = () => {
           className="w-full rounded-xl border border-[#bdd0d3] bg-white px-3 py-2 text-sm text-[#1b3137] transition focus:outline-none focus:ring-4 focus:ring-[#0f6a73]/20"
         >
           <option value="all">All Brands</option>
-          {[...new Set(products.map((p) => p.brand_name))]
-            .filter(Boolean)
-            .sort()
-            .map((b) => (
-              <option key={b} value={b}>
-                {b}
+          {brandFilterOptions.map((brand) => (
+              <option key={brand.value} value={brand.value}>
+                {brand.label}
               </option>
             ))}
         </select>
