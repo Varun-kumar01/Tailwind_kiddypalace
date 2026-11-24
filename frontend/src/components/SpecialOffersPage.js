@@ -4,7 +4,7 @@ import { useCart } from '../context/CartContext';
 import Header from './Header';
 import Footer from './Footer';
 import { API_BASE_URL } from "./config";
-import { compareInStockFirst } from '../utils/productSorting';
+import { compareProductsForListing } from '../utils/productSorting';
 import useBrandNames from '../hooks/useBrandNames';
 
 const ProductsPage = () => {
@@ -642,8 +642,8 @@ const ProductsPage = () => {
 
   // 🔹 Apply sorting to filtered products
   const sortedProducts = [...filteredProducts].sort((a, b) => {
-    const stockOrder = compareInStockFirst(a, b);
-    if (stockOrder !== 0) return stockOrder;
+    const listingOrder = compareProductsForListing(a, b);
+    if (listingOrder !== 0) return listingOrder;
     if (sortOrder === 'lowToHigh') return Number(a.price) - Number(b.price);
     if (sortOrder === 'highToLow') return Number(b.price) - Number(a.price);
     return 0;

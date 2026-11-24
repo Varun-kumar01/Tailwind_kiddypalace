@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import { API_BASE_URL } from './config';
-import { sortInStockFirst } from '../utils/productSorting';
+import { sortProductsForListing } from '../utils/productSorting';
 import slide1 from '../components/assets/slides/slide1.jpg';
 import slide2 from '../components/assets/slides/slide2.jpg';
 import slide3 from '../components/assets/slides/slide3.jpg';
@@ -226,7 +226,7 @@ const HomePage = () => {
       try {
         const response = await fetch(`${API_BASE_URL}/api/new-arrivals?time=${Date.now()}`);
         const data = await response.json();
-        setNewArrivals(sortInStockFirst(Array.isArray(data.products) ? data.products : []));
+        setNewArrivals(sortProductsForListing(Array.isArray(data.products) ? data.products : []));
       } catch (error) {
         console.error('Error loading new arrivals', error);
       }
@@ -269,7 +269,7 @@ const HomePage = () => {
         // const response = await fetch(`${API_BASE_URL}/api/products?discount=high&time=${Date.now()}`);
        const response = await fetch(`${API_BASE_URL}/api/discount/high?t=${Date.now()}`);
         const data = await response.json();
-        setSpecialOffers(sortInStockFirst(Array.isArray(data.products) ? data.products : []));
+        setSpecialOffers(sortProductsForListing(Array.isArray(data.products) ? data.products : []));
       } catch (error) {
         console.error('Error loading special offers', error);
       }

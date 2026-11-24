@@ -4,7 +4,7 @@ import { useCart } from '../context/CartContext';
 import Header from './Header';
 import Footer from './Footer';
 import { API_BASE_URL } from "./config";
-import { compareInStockFirst } from '../utils/productSorting';
+import { compareProductsForListing } from '../utils/productSorting';
 import useBrandNames from '../hooks/useBrandNames';
 
 const ProductsPage = () => {
@@ -100,6 +100,8 @@ const ProductsPage = () => {
         setTagName('');
         return;
       }
+
+      setTagName('');
 
       try {
         const res = await fetch(`${API_BASE_URL}/api/tags?t=${Date.now()}`);
@@ -690,22 +692,8 @@ const ProductsPage = () => {
 
   // 🔹 Apply sorting to filtered products
   const sortedProducts = [...filteredProducts].sort((a, b) => {
-  const stockOrder = compareInStockFirst(a, b);
-  if (stockOrder !== 0) return stockOrder;
-
-  const ageFilterActive = filters.ageRange !== "all" || !!age;
-  
-  console.log('ageFilterActive:', ageFilterActive, 'filters.ageRange:', filters.ageRange, 'age:', age);
-  console.log('Product a:', a.name, 'age_range:', a.age_range);
-  console.log('Product b:', b.name, 'age_range:', b.age_range);
-
-  if (ageFilterActive) {
-    const aHasAge = !!a.age_range && a.age_range.trim() !== '' && a.age_range.trim() !== '0';
-    const bHasAge = !!b.age_range && b.age_range.trim() !== '' && b.age_range.trim() !== '0';
-
-    if (aHasAge && !bHasAge) return -1;
-    if (!aHasAge && bHasAge) return 1;
-  }
+  const listingOrder = compareProductsForListing(a, b);
+  if (listingOrder !== 0) return listingOrder;
 
   if (sortOrder === "lowToHigh") return Number(a.price) - Number(b.price);
   if (sortOrder === "highToLow") return Number(b.price) - Number(a.price);
@@ -731,19 +719,21 @@ const ProductsPage = () => {
       ? 'Customized Products'
       : isNewArrivalsPage
         ? 'Fresh In Store'
-        : hasTag || tagId
-          ? 'Characters & Themes'
-          : brand
-            ? `Brand: ${capitalize(brand)}`
-            : age
-            ? `Products for ${age}`
-            : location.pathname.includes('/by-sub-subcategory/')
-              ? (subSubcategoryName || 'products')
-              : subcategory
-                ? subcategory.toUpperCase()
-                : categoryId
-                  ? (categoryName || 'Category Products')
-                  : 'All Products';
+        : tagId
+          ? capitalize(tagName) || 'Characters & Themes'
+          : hasTag
+            ? 'Characters & Themes'
+            : brand
+              ? `Brand: ${capitalize(brand)}`
+              : age
+                ? `Products for ${age}`
+                : location.pathname.includes('/by-sub-subcategory/')
+                  ? (subSubcategoryName || 'products')
+                  : subcategory
+                    ? subcategory.toUpperCase()
+                    : categoryId
+                      ? (categoryName || 'Category Products')
+                      : 'All Products';
 
   const clearAllFilters = () => {
     setFilters({ priceRange: 'all', ageRange: 'all', brand: 'all' });
